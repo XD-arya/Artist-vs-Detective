@@ -1,435 +1,1729 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="An interactive 3D explainer of generative vs discriminative models, with a live demo of each.">
-<title>Generative vs Discriminative Models</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#fffaf0;--tint:#fff2cc;--tx:#231815;--mu:#4d3d32;--ln:rgba(35,24,21,.16);--r:#d62828;--g:#f0a500;--gd:#a86600;--y:#ffd60a;--e:cubic-bezier(.2,.8,.2,1)}
-html{font-size:clamp(16px,.42vw + 10px,22px)}*{box-sizing:border-box;margin:0}
-body{background:radial-gradient(#23181522 1px,transparent 1.4px) 0 0/26px 26px,var(--bg);color:var(--tx);font:400 1.08rem/1.65 'Bricolage Grotesque',system-ui,sans-serif;overflow-x:hidden}
-:focus-visible{outline:3px solid var(--r);outline-offset:3px}
-nav{position:fixed;inset:0 0 auto;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:16px 4vw;background:linear-gradient(#fffaf0f2,#fffaf000);backdrop-filter:blur(8px)}
-nav b{font-weight:800}nav div{display:flex;gap:24px}nav a{color:var(--mu);text-decoration:none;font-size:.95rem;font-weight:500;transition:color .3s}nav a:hover{color:var(--r)}
-#bar{position:fixed;top:0;left:0;height:3px;width:100%;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--r),var(--g),var(--y));z-index:30}
-#top{position:relative;z-index:1;min-height:100svh;display:flex;align-items:center;padding:0 5vw;overflow:hidden;background:radial-gradient(720px 520px at 78% 46%,#ffe39a99,transparent)}
-#hero{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.hw{position:relative;z-index:2;max-width:49rem}
-h1{width:fit-content;font-size:clamp(2.4rem,5.2vw,4.6rem);line-height:.98;font-weight:800;letter-spacing:-.035em}
-h2{font-size:clamp(2rem,4.4vw,3.7rem);line-height:1.04;font-weight:800;letter-spacing:-.028em;margin-bottom:22px}
-.ln{display:block;overflow:hidden;padding-bottom:.12em;margin-bottom:-.12em}
-.ln>span{display:block;transform:translateY(170%) rotate(6deg);transform-origin:0 100%;transition:transform 1.1s var(--e) calc(var(--d,0)*1s)}
-.hd.in .ln>span{transform:none}
-.g1{color:var(--r)}.g2{color:var(--gd)}
-.sub{color:var(--mu);max-width:50ch;margin:26px 0 32px;font-size:1.18rem}
-.rv{opacity:0;transform:translateY(150px) scale(.9);transition:opacity 1s var(--e) calc(var(--d,0)*1s),transform 1.25s var(--e) calc(var(--d,0)*1s)}
-.rv.in{opacity:1;transform:none}
-.btn{background:#fff;border:1.5px solid var(--tx);color:var(--tx);padding:.7em 1.3em;border-radius:999px;font:600 .95rem 'Bricolage Grotesque',system-ui,sans-serif;cursor:pointer;text-decoration:none;display:inline-block;transition:transform .3s var(--e),box-shadow .3s}
-.btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px -8px #231815aa}
-.btn.p{background:var(--tx);color:var(--y)}
-.scr{position:absolute;bottom:28px;left:5vw;color:var(--mu);font-size:.9rem;z-index:2}
-section{position:relative;z-index:1;padding:14vh 5vw;overflow:hidden}.wrap{max-width:none;margin:0 auto;position:relative;z-index:1}
-#s-idea{background:radial-gradient(620px 420px at 92% 8%,#ffd60a40,transparent),radial-gradient(520px 420px at 4% 96%,#d6282826,transparent)}
-#s-disc,#s-cmp{background:#fff2ccc2}
-#s-gen{background:radial-gradient(620px 460px at 4% 12%,#f0a50033,transparent);padding:12vh 5vw 7vh}
-#s-gen h2{font-size:clamp(1.8rem,3.3vw,2.9rem);margin-bottom:12px}#s-gen .lead{font-size:1.05rem}#s-gen .flow{margin:10px 0}#s-gen .note{margin-top:8px}#s-gen .pnl{min-height:min(700px,74vh)}
-#s-gan{background:radial-gradient(700px 460px at 50% 100%,#d6282826,transparent)}
-#bgc{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:0}
-.lead{color:var(--mu);max-width:58ch;font-size:1.12rem}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:46px}
-.card{background:#fff;border:1.5px solid var(--ln);border-radius:24px;padding:30px;box-shadow:0 26px 50px -32px #a8660088}
-.ico{display:block;width:150px;height:150px;margin:-6px 0 4px -12px}
-.card h3{font-size:1.6rem;margin-bottom:10px;letter-spacing:-.02em}.card p{color:var(--mu)}
-.q{margin:18px 0;padding-left:16px;border-left:3px solid var(--c);color:var(--tx)!important;font-weight:600}
-.chip{display:inline-block;border:1.5px solid var(--ln);border-radius:999px;padding:.25em .9em;font-size:.92rem;font-weight:600;background:#fff4d6}
-.demo{display:grid;grid-template-columns:.8fr 1.2fr;gap:5vw;align-items:center}
-.demo.rev{grid-template-columns:1.2fr .8fr}
-.pnl{position:relative;border-radius:28px;overflow:hidden;min-height:clamp(480px,68vh,760px);background:radial-gradient(circle at 50% 38%,#5c2214,#1d0e0a 74%);box-shadow:0 34px 60px -34px #5c2214}
-.pnl canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:pan-y;cursor:grab}
-.ro{position:absolute;left:18px;top:18px;display:flex;flex-direction:column;gap:3px;background:#1d0e0acc;backdrop-filter:blur(8px);border:1px solid #ffffff30;border-radius:14px;padding:10px 14px;font-size:.95rem;color:#fff;pointer-events:none}
-.ro b{font-variant-numeric:tabular-nums;color:var(--y)}.res{color:var(--y);min-height:1.5em;font-weight:600}
-.bar{display:block;width:170px;height:6px;border-radius:6px;background:#ffffff30;overflow:hidden;margin-top:4px}
-.bar u{display:block;height:100%;width:98%;background:linear-gradient(90deg,var(--r),var(--g));transition:width .2s}
-.hint{position:absolute;right:18px;top:18px;color:#ffffffcc;font-size:.85rem;pointer-events:none}
-.ctl{position:absolute;left:18px;right:18px;bottom:18px;display:flex;gap:10px;flex-wrap:wrap}
-.pnl .btn{background:#ffffff18;border-color:#ffffff55;color:#fff}.pnl .btn.p{background:var(--y);border-color:var(--y);color:#231815}
-ol{padding-left:1.2em;display:grid;gap:12px;color:var(--mu);margin:26px 0}li::marker{color:var(--r);font-weight:800}
-strong{color:var(--tx);font-weight:700}.dot{display:inline-block;width:.7em;height:.7em;border-radius:50%;margin:0 .3em 0 .1em;background:var(--c);border:1px solid #23181577}
-.note{color:var(--mu);font-size:.92rem;border-top:1.5px solid var(--ln);padding-top:14px;margin-top:8px}
-#cb{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
-.cmp{display:grid;grid-template-columns:.7fr 1fr 1fr;border:1.5px solid var(--ln);border-radius:26px;overflow:hidden;margin-top:40px;background:#fffffff0}
-.cmp>*{padding:20px 26px;border-bottom:1.5px solid var(--ln)}.cmp>:nth-last-child(-n+3){border-bottom:0}
-.cmp h3{font-size:1.3rem}.cmp b{color:var(--mu);font-weight:600}
-.wide{min-height:clamp(440px,52vh,620px);margin:38px 0 0}.lb{position:absolute;bottom:18px;font-weight:700;font-size:.95rem}.lb.l{left:22px;color:var(--y)}.lb.r{right:22px;color:#ff8a8a}
-.big{font-size:clamp(1.8rem,4vw,3.2rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-top:80px;max-width:22ch}
-.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:22px 0}.flow span{background:#fff;border:1.5px solid var(--tx);border-radius:12px;padding:.35em .8em;font-weight:700;font-size:.95rem}.flow span:nth-child(3){background:var(--g)}.flow span:nth-child(5){background:var(--y)}.flow i{font-style:normal;font-weight:800;color:var(--r)}
-.terms{display:grid;gap:10px;margin:8px 0 6px}.terms div{background:#ffffffd0;border:1.5px solid var(--ln);border-radius:14px;padding:10px 14px}.terms dt{font-weight:800}.terms dd{color:var(--mu);font-size:.97rem;line-height:1.5}
-.dot.o{background:transparent;border:2px solid var(--c)}
-.cap{position:absolute;left:18px;right:18px;bottom:74px;background:#1d0e0acc;backdrop-filter:blur(8px);border:1px solid #ffffff30;border-radius:14px;padding:10px 14px;color:#fff;font-size:.95rem;line-height:1.45;pointer-events:none}.cap b{display:block;color:var(--y);margin-bottom:2px}
-.hint{text-align:right;line-height:1.7}.hint .dot{border-color:#fff9}
-.vs{font-size:.4em;font-weight:600;margin:.35em 0 .15em;letter-spacing:0;text-align:center}
-:root{--vg:#fffaf0}#s-disc,#s-cmp{--vg:#fff2cc}
-.lead,.sub,ol,.note{color:var(--tx);padding:14px 20px;margin-left:-20px;background:radial-gradient(ellipse 78% 88% at 50% 50%,var(--vg) 55%,transparent 100%)}
-.lead,.sub{font-weight:500}ol{padding:14px 20px 14px 2.6em}.note{border-top:0}
-.terms{grid-template-columns:1fr 1fr}.terms div{padding:8px 12px}.terms dt{font-size:.98rem}.terms dd{color:var(--tx);font-size:.9rem;line-height:1.4}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:38px}.four{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:26px}
-.num{display:inline-grid;place-items:center;width:2.3rem;height:2.3rem;border-radius:50%;background:var(--tx);color:var(--y);font-weight:800;margin-bottom:12px}
-.four .card{padding:22px}.four h3{font-size:1.25rem}.four p{font-size:.95rem}
-.ctl.tr{top:18px;bottom:auto;left:auto;right:18px}
-@media(max-width:1100px){.four{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){.four,.steps{grid-template-columns:1fr}}
-@media(max-width:900px){.steps{grid-template-columns:1fr}.cap{bottom:128px}}
-.num.sm{width:1.7rem;height:1.7rem;font-size:.85rem;margin:0 .6em 0 0}.terms dt{display:flex;align-items:center}.terms.one{grid-template-columns:1fr}#s-base .pnl{min-height:clamp(380px,56vh,560px)}
-.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:34px}.fact.s2{grid-column:span 2}
-.fact{position:relative;background:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 11%,#fff),#fff 85%);border:1.5px solid var(--ln);border-top:5px solid var(--c);border-radius:18px;overflow:hidden}.fact:nth-child(odd){rotate:-.5deg}.fact:nth-child(even){rotate:.5deg}
-.tag{display:flex;align-items:center;gap:.6em;color:var(--tx);font-weight:800;font-size:1.02rem;line-height:1.25;padding:14px 18px 0}
-.ic{font-style:normal;display:inline-grid;place-items:center;flex:none;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--c);color:var(--tc,#fff);font-size:.9rem;font-weight:800}
-.fact p{color:var(--tx);font-size:.98rem;line-height:1.5;padding:8px 18px 18px}.ro small{font-size:.78rem;color:#ffffffcc}
-@media(max-width:1100px){.facts{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){.facts{grid-template-columns:1fr}.fact.s2{grid-column:auto}}
-.rv.done{transition:transform .25s ease-out,rotate .25s ease-out,box-shadow .25s ease-out,opacity .3s}
-.rv.done.fact:hover,.rv.done.mem:hover{transform:translateY(-4px);rotate:0deg;box-shadow:0 26px 46px -12px rgba(0,0,0,.42),0 6px 14px rgba(0,0,0,.14)}
-#s-team{background:#fff2ccc2}.team{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;margin-top:38px}
-.mem{background:#fffdf5;border:1.5px solid var(--ln);border-radius:20px;padding:28px 20px 26px;text-align:center}.mem:nth-child(odd){rotate:-.5deg}.mem:nth-child(even){rotate:.5deg}
-.av{display:inline-grid;place-items:center;width:4.6rem;height:4.6rem;border-radius:50%;background:var(--c);color:var(--tc,#fff);border:2px solid var(--tx);font-weight:800;font-size:1.45rem;margin-bottom:14px}
-.mem h3{font-size:1.3rem;line-height:1.2;margin-bottom:10px;letter-spacing:-.01em}
-@media(max-width:900px){.team{grid-template-columns:1fr 1fr}}@media(max-width:500px){.team{grid-template-columns:1fr}}
-:root{--sh:0 18px 38px -12px rgba(0,0,0,.34),0 4px 10px rgba(0,0,0,.12)}
-.card,.terms div,.cmp{box-shadow:var(--sh)}
-.pnl{box-shadow:0 28px 54px -18px rgba(0,0,0,.5),0 4px 12px rgba(0,0,0,.16)}
-.fact,.mem{box-shadow:var(--sh)}
-body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:40;background:radial-gradient(ellipse 125% 115% at 50% 50%,transparent 58%,rgba(35,24,21,.2) 100%)}
-mark{color:inherit;background:linear-gradient(transparent 52%,rgba(255,214,10,.85) 52%);padding:0 .12em;border-radius:3px;font-weight:600;-webkit-box-decoration-break:clone;box-decoration-break:clone}
-mark.r{background:linear-gradient(transparent 52%,rgba(214,40,40,.28) 52%)}
-.pts{list-style:none;padding:0;display:grid;gap:9px;margin:14px 0 18px}.pts li{position:relative;padding-left:1.15em;font-size:.98rem;line-height:1.5;color:var(--tx)}
-.pts li::before{content:"";position:absolute;left:0;top:.6em;width:.48em;height:.48em;border-radius:50%;background:var(--c)}
-footer{padding:40px 5vw 60px;color:var(--mu);font-size:.92rem;border-top:1.5px solid var(--ln)}
-@media(max-width:900px){.two,.demo,.demo.rev,.terms{grid-template-columns:1fr}.demo.rev .pnl{order:2}.pnl{min-height:480px}nav div{display:none}
-.cmp{grid-template-columns:1fr 1fr}.cmp>i{display:none}.cmp b{grid-column:1/-1;padding-bottom:0;border:0}.cmp>:nth-last-child(-n+3){border-bottom:1.5px solid var(--ln)}.cmp>:last-child,.cmp>:nth-last-child(2){border-bottom:0}}
-@media(prefers-reduced-motion:reduce){.rv,.ln>span{transition:none;transform:none;opacity:1}}
-</style></head><body>
-<div id="bar"></div><canvas id="bgc"></canvas>
-<nav><b>Generative vs Discriminative</b><div><a href="#s-animal">Try it</a><a href="#s-base">Basics</a><a href="#s-idea">Two models</a><a href="#s-disc">Discriminative</a><a href="#s-gen">Generative</a><a href="#s-cmp">Compare</a><a href="#s-gan">GAN</a><a href="#s-team">Team</a></div></nav>
+<html lang="en">
 
-<header id="top"><canvas id="hero"></canvas>
-<div class="hw"><h1 class="hd"><span class="ln" style="--d:.1;--hx:-112%"><span class="g1">Telling things apart</span></span><span class="ln vs" style="--d:.2;--hx:112%"><span>versus</span></span><span class="ln" style="--d:.32;--hx:-112%"><span class="g2">Making new ones</span></span></h1>
-<p class="sub rv" style="--d:.6">Generative and discriminative models are two ways a neural network can learn from data. Scroll to meet each one, then play with a live demo of both.</p>
-</div>
-<span class="scr">Scroll to explore</span></header>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description"
+    content="An interactive 3D explainer of generative vs discriminative models, with a live demo of each.">
+  <title>Generative vs Discriminative Models</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fffaf0;
+      --tint: #fff2cc;
+      --tx: #231815;
+      --mu: #4d3d32;
+      --ln: rgba(35, 24, 21, .16);
+      --r: #d62828;
+      --g: #f0a500;
+      --gd: #a86600;
+      --y: #ffd60a;
+      --e: cubic-bezier(.2, .8, .2, 1)
+    }
 
-<!-- ── Interactive "One Animal → Three Numbers" Explainer ── -->
-<section id="s-animal" style="background:radial-gradient(600px 400px at 50% 60%,#ffd60a30,transparent)">
-<div class="wrap demo">
-<div>
-<h2 class="hd"><span class="ln"><span>One animal, three numbers</span></span></h2>
-<p class="lead rv">Before the demos, let's build intuition. Every animal can be described by a few measurements. Those measurements become <mark>coordinates in space</mark>. Drag the sliders and watch the dot move.</p>
-<div class="animal-explainer rv" style="--d:.15">
-<div class="ae-presets">
-<button class="ae-pre active" data-ear="9" data-snout="3" data-wt="4" data-who="cat" id="ae-catA">🐱 Cat A</button>
-<button class="ae-pre" data-ear="8" data-snout="4" data-wt="5" data-who="cat" id="ae-catB">🐱 Cat B</button>
-<button class="ae-pre" data-ear="4" data-snout="9" data-wt="20" data-who="dog" id="ae-dogA">🐶 Dog A</button>
-<button class="ae-pre" data-ear="3" data-snout="12" data-wt="30" data-who="dog" id="ae-dogB">🐶 Dog B</button>
-</div>
-<div class="ae-sliders">
-<label>Ear pointiness <b id="ae-ev">9</b><input type="range" id="ae-ear" min="0" max="10" step="0.1" value="9"></label>
-<label>Snout length <b id="ae-sv">3</b> cm<input type="range" id="ae-snout" min="0" max="15" step="0.1" value="3"></label>
-<label>Weight <b id="ae-wv">4</b> kg<input type="range" id="ae-wt" min="1" max="40" step="0.5" value="4"></label>
-</div>
-<div class="ae-coords rv" style="--d:.25">
-<span class="ae-coord">(<b id="ae-cx">9</b>, <b id="ae-cy">3</b>, <b id="ae-cz">4</b>)</span>
-<span class="ae-label" id="ae-who">= Cat A's position in 3D space</span>
-</div>
-<p class="note rv" style="--d:.3">Cats have <strong>pointy ears, short snouts, low weight</strong> — they cluster together. Dogs land in a different region. Two clouds of dots, two groups.</p>
-<div class="ae-extra rv" style="--d:.35">
-<p style="font-size:.92rem;color:var(--mu)"><strong>The same idea works for anything:</strong></p>
-<ul class="pts" style="--c:var(--g)">
-<li>A house → (size, bedrooms, age)</li>
-<li>A student → (marks, attendance, hours studied)</li>
-<li>A 28×28 photo → 784 numbers → a point in 784-D space</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="pnl rv" style="min-height:clamp(380px,56vh,560px)">
-<canvas id="ae3d"></canvas>
-<span class="hint">Drag to rotate<br><span class="dot" style="--c:#fff"></span>Cat<br><span class="dot" style="--c:var(--r)"></span>Dog<br><span class="dot" style="--c:var(--g)"></span>You</span>
-<div class="cap" style="bottom:18px">Pick a preset or drag the sliders. The gold dot is your animal — see how cats and dogs form separate clouds.</div>
-</div>
-</div>
-</section>
+    html {
+      font-size: clamp(16px, .42vw + 10px, 22px)
+    }
 
-<style>
-.animal-explainer{margin-top:22px}
-.ae-presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
-.ae-pre{background:#fff;border:1.5px solid var(--ln);border-radius:999px;padding:.4em 1em;font:600 .92rem 'Bricolage Grotesque',system-ui,sans-serif;cursor:pointer;transition:all .25s var(--e)}
-.ae-pre:hover{border-color:var(--tx);transform:translateY(-1px)}
-.ae-pre.active{background:var(--tx);color:var(--y);border-color:var(--tx)}
-.ae-sliders{display:grid;gap:14px}
-.ae-sliders label{display:grid;grid-template-columns:1fr;gap:4px;font-size:.95rem;font-weight:600;color:var(--tx)}
-.ae-sliders label b{color:var(--r);font-variant-numeric:tabular-nums;margin:0 .15em}
-.ae-sliders input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;background:linear-gradient(90deg,var(--g),var(--r));outline:none;cursor:pointer}
-.ae-sliders input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--tx);border:2px solid var(--y);cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.ae-sliders input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--tx);border:2px solid var(--y);cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.ae-coords{margin-top:18px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.ae-coord{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;color:var(--tx);background:#fff4d6;padding:.15em .5em;border-radius:12px;border:1.5px solid var(--ln)}
-.ae-coord b{color:var(--r);font-variant-numeric:tabular-nums}
-.ae-label{color:var(--mu);font-size:.95rem;font-weight:500}
-.ae-extra{margin-top:14px;padding:12px 16px;background:#ffffffd0;border:1.5px solid var(--ln);border-radius:14px}
-</style>
+    * {
+      box-sizing: border-box;
+      margin: 0
+    }
 
-<section id="s-base"><div class="wrap demo">
-<div><h2 class="hd"><span class="ln"><span>Now scale it up</span></span></h2>
-<p class="lead rv">You just placed 4 animals into 3D space. A real dataset has <mark>hundreds of photos</mark>, each turned into numbers the same way. The clouds get bigger, but the idea is identical.</p>
-<dl class="terms one rv"><div><dt><span class="num sm">1</span>Features</dt><dd>Every photo becomes a list of numbers — just like ear pointiness, snout length and weight, but a neural network picks the features automatically. A real photo has thousands.</dd></div>
-<div><dt><span class="num sm">2</span>Labels and groups</dt><dd>An example may carry a label, like cat or dog. Points with the same label tend to gather into clouds, exactly like the ones you just built.</dd></div>
-<div><dt><span class="num sm">3</span>Two different questions</dt><dd>Where is the <mark class="r">boundary</mark> between the clouds? Or, what does a cloud <mark>look like</mark>, so we can place a new member in it?</dd></div></dl>
-<p class="lead rv">The first question leads to <mark class="r">discriminative</mark> models. The second leads to <mark>generative</mark> models.</p></div>
-<div class="pnl rv"><canvas id="pts3"></canvas><span class="hint">Drag to rotate<br><span class="dot" style="--c:#fff"></span>Cat photo<br><span class="dot" style="--c:var(--r)"></span>Dog photo</span><div class="cap" style="bottom:18px">Hundreds of photos, each a dot. Same idea as your 4 animals — just more of them.</div></div>
-</div></section>
+    body {
+      background: radial-gradient(#23181522 1px, transparent 1.4px) 0 0/26px 26px, var(--bg);
+      color: var(--tx);
+      font: 400 1.08rem/1.65 'Bricolage Grotesque', system-ui, sans-serif;
+      overflow-x: hidden
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--r);
+      outline-offset: 3px
+    }
+
+    nav {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 4vw;
+      background: linear-gradient(#fffaf0f2, #fffaf000);
+      backdrop-filter: blur(8px)
+    }
+
+    nav b {
+      font-weight: 800
+    }
+
+    nav div {
+      display: flex;
+      gap: 24px
+    }
+
+    nav a {
+      color: var(--mu);
+      text-decoration: none;
+      font-size: .95rem;
+      font-weight: 500;
+      transition: color .3s
+    }
+
+    nav a:hover {
+      color: var(--r)
+    }
+
+    #bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      width: 100%;
+      transform-origin: 0 50%;
+      transform: scaleX(0);
+      background: linear-gradient(90deg, var(--r), var(--g), var(--y));
+      z-index: 30
+    }
+
+    #top {
+      position: relative;
+      z-index: 1;
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      padding: 0 5vw;
+      overflow: hidden;
+      background: radial-gradient(720px 520px at 78% 46%, #ffe39a99, transparent)
+    }
+
+    #hero {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none
+    }
+
+    .hw {
+      position: relative;
+      z-index: 2;
+      max-width: 49rem
+    }
+
+    h1 {
+      width: fit-content;
+      font-size: clamp(2.4rem, 5.2vw, 4.6rem);
+      line-height: .98;
+      font-weight: 800;
+      letter-spacing: -.035em
+    }
+
+    h2 {
+      font-size: clamp(2rem, 4.4vw, 3.7rem);
+      line-height: 1.04;
+      font-weight: 800;
+      letter-spacing: -.028em;
+      margin-bottom: 22px
+    }
+
+    .ln {
+      display: block;
+      overflow: hidden;
+      padding-bottom: .12em;
+      margin-bottom: -.12em
+    }
+
+    .ln>span {
+      display: block;
+      transform: translateY(170%) rotate(6deg);
+      transform-origin: 0 100%;
+      transition: transform 1.1s var(--e) calc(var(--d, 0)*1s)
+    }
+
+    .hd.in .ln>span {
+      transform: none
+    }
+
+    .g1 {
+      color: var(--r)
+    }
+
+    .g2 {
+      color: var(--gd)
+    }
+
+    .sub {
+      color: var(--mu);
+      max-width: 50ch;
+      margin: 26px 0 32px;
+      font-size: 1.18rem
+    }
+
+    .rv {
+      opacity: 0;
+      transform: translateY(150px) scale(.9);
+      transition: opacity 1s var(--e) calc(var(--d, 0)*1s), transform 1.25s var(--e) calc(var(--d, 0)*1s)
+    }
+
+    .rv.in {
+      opacity: 1;
+      transform: none
+    }
+
+    .btn {
+      background: #fff;
+      border: 1.5px solid var(--tx);
+      color: var(--tx);
+      padding: .7em 1.3em;
+      border-radius: 999px;
+      font: 600 .95rem 'Bricolage Grotesque', system-ui, sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: transform .3s var(--e), box-shadow .3s
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px -8px #231815aa
+    }
+
+    .btn.p {
+      background: var(--tx);
+      color: var(--y)
+    }
+
+    .scr {
+      position: absolute;
+      bottom: 28px;
+      left: 5vw;
+      color: var(--mu);
+      font-size: .9rem;
+      z-index: 2
+    }
+
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 14vh 5vw;
+      overflow: hidden
+    }
+
+    .wrap {
+      max-width: none;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1
+    }
+
+    #s-idea {
+      background: radial-gradient(620px 420px at 92% 8%, #ffd60a40, transparent), radial-gradient(520px 420px at 4% 96%, #d6282826, transparent)
+    }
+
+    #s-disc,
+    #s-cmp {
+      background: #fff2ccc2
+    }
+
+    #s-gen {
+      background: radial-gradient(620px 460px at 4% 12%, #f0a50033, transparent);
+      padding: 12vh 5vw 7vh
+    }
+
+    #s-gen h2 {
+      font-size: clamp(1.8rem, 3.3vw, 2.9rem);
+      margin-bottom: 12px
+    }
+
+    #s-gen .lead {
+      font-size: 1.05rem
+    }
+
+    #s-gen .flow {
+      margin: 10px 0
+    }
+
+    #s-gen .note {
+      margin-top: 8px
+    }
+
+    #s-gen .pnl {
+      min-height: min(700px, 74vh)
+    }
+
+    #s-gan {
+      background: radial-gradient(700px 460px at 50% 100%, #d6282826, transparent)
+    }
+
+    #bgc {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0
+    }
+
+    .lead {
+      color: var(--mu);
+      max-width: 58ch;
+      font-size: 1.12rem
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 26px;
+      margin-top: 46px
+    }
+
+    .card {
+      background: #fff;
+      border: 1.5px solid var(--ln);
+      border-radius: 24px;
+      padding: 30px;
+      box-shadow: 0 26px 50px -32px #a8660088
+    }
+
+    .ico {
+      display: block;
+      width: 150px;
+      height: 150px;
+      margin: -6px 0 4px -12px
+    }
+
+    .card h3 {
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+      letter-spacing: -.02em
+    }
+
+    .card p {
+      color: var(--mu)
+    }
+
+    .q {
+      margin: 18px 0;
+      padding-left: 16px;
+      border-left: 3px solid var(--c);
+      color: var(--tx) !important;
+      font-weight: 600
+    }
+
+    .chip {
+      display: inline-block;
+      border: 1.5px solid var(--ln);
+      border-radius: 999px;
+      padding: .25em .9em;
+      font-size: .92rem;
+      font-weight: 600;
+      background: #fff4d6
+    }
+
+    .demo {
+      display: grid;
+      grid-template-columns: .8fr 1.2fr;
+      gap: 5vw;
+      align-items: center
+    }
+
+    .demo.rev {
+      grid-template-columns: 1.2fr .8fr
+    }
+
+    .pnl {
+      position: relative;
+      border-radius: 28px;
+      overflow: hidden;
+      min-height: clamp(480px, 68vh, 760px);
+      background: radial-gradient(circle at 50% 38%, #5c2214, #1d0e0a 74%);
+      box-shadow: 0 34px 60px -34px #5c2214
+    }
+
+    .pnl canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: pan-y;
+      cursor: grab
+    }
+
+    .ro {
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      background: #1d0e0acc;
+      backdrop-filter: blur(8px);
+      border: 1px solid #ffffff30;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: .95rem;
+      color: #fff;
+      pointer-events: none
+    }
+
+    .ro b {
+      font-variant-numeric: tabular-nums;
+      color: var(--y)
+    }
+
+    .res {
+      color: var(--y);
+      min-height: 1.5em;
+      font-weight: 600
+    }
+
+    .bar {
+      display: block;
+      width: 170px;
+      height: 6px;
+      border-radius: 6px;
+      background: #ffffff30;
+      overflow: hidden;
+      margin-top: 4px
+    }
+
+    .bar u {
+      display: block;
+      height: 100%;
+      width: 98%;
+      background: linear-gradient(90deg, var(--r), var(--g));
+      transition: width .2s
+    }
+
+    .hint {
+      position: absolute;
+      right: 18px;
+      top: 18px;
+      color: #ffffffcc;
+      font-size: .85rem;
+      pointer-events: none
+    }
+
+    .ctl {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .pnl .btn {
+      background: #ffffff18;
+      border-color: #ffffff55;
+      color: #fff
+    }
+
+    .pnl .btn.p {
+      background: var(--y);
+      border-color: var(--y);
+      color: #231815
+    }
+
+    ol {
+      padding-left: 1.2em;
+      display: grid;
+      gap: 12px;
+      color: var(--mu);
+      margin: 26px 0
+    }
+
+    li::marker {
+      color: var(--r);
+      font-weight: 800
+    }
+
+    strong {
+      color: var(--tx);
+      font-weight: 700
+    }
+
+    .dot {
+      display: inline-block;
+      width: .7em;
+      height: .7em;
+      border-radius: 50%;
+      margin: 0 .3em 0 .1em;
+      background: var(--c);
+      border: 1px solid #23181577
+    }
+
+    .note {
+      color: var(--mu);
+      font-size: .92rem;
+      border-top: 1.5px solid var(--ln);
+      padding-top: 14px;
+      margin-top: 8px
+    }
+
+    #cb {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none
+    }
+
+    .cmp {
+      display: grid;
+      grid-template-columns: .7fr 1fr 1fr;
+      border: 1.5px solid var(--ln);
+      border-radius: 26px;
+      overflow: hidden;
+      margin-top: 40px;
+      background: #fffffff0
+    }
+
+    .cmp>* {
+      padding: 20px 26px;
+      border-bottom: 1.5px solid var(--ln)
+    }
+
+    .cmp>:nth-last-child(-n+3) {
+      border-bottom: 0
+    }
+
+    .cmp h3 {
+      font-size: 1.3rem
+    }
+
+    .cmp b {
+      color: var(--mu);
+      font-weight: 600
+    }
+
+    .wide {
+      min-height: clamp(440px, 52vh, 620px);
+      margin: 38px 0 0
+    }
+
+    .lb {
+      position: absolute;
+      bottom: 18px;
+      font-weight: 700;
+      font-size: .95rem
+    }
+
+    .lb.l {
+      left: 22px;
+      color: var(--y)
+    }
+
+    .lb.r {
+      right: 22px;
+      color: #ff8a8a
+    }
+
+    .big {
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -.03em;
+      line-height: 1.1;
+      margin-top: 80px;
+      max-width: 22ch
+    }
+
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 22px 0
+    }
+
+    .flow span {
+      background: #fff;
+      border: 1.5px solid var(--tx);
+      border-radius: 12px;
+      padding: .35em .8em;
+      font-weight: 700;
+      font-size: .95rem
+    }
+
+    .flow span:nth-child(3) {
+      background: var(--g)
+    }
+
+    .flow span:nth-child(5) {
+      background: var(--y)
+    }
+
+    .flow i {
+      font-style: normal;
+      font-weight: 800;
+      color: var(--r)
+    }
+
+    .terms {
+      display: grid;
+      gap: 10px;
+      margin: 8px 0 6px
+    }
+
+    .terms div {
+      background: #ffffffd0;
+      border: 1.5px solid var(--ln);
+      border-radius: 14px;
+      padding: 10px 14px
+    }
+
+    .terms dt {
+      font-weight: 800
+    }
+
+    .terms dd {
+      color: var(--mu);
+      font-size: .97rem;
+      line-height: 1.5
+    }
+
+    .dot.o {
+      background: transparent;
+      border: 2px solid var(--c)
+    }
+
+    .cap {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 74px;
+      background: #1d0e0acc;
+      backdrop-filter: blur(8px);
+      border: 1px solid #ffffff30;
+      border-radius: 14px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: .95rem;
+      line-height: 1.45;
+      pointer-events: none
+    }
+
+    .cap b {
+      display: block;
+      color: var(--y);
+      margin-bottom: 2px
+    }
+
+    .hint {
+      text-align: right;
+      line-height: 1.7
+    }
+
+    .hint .dot {
+      border-color: #fff9
+    }
+
+    .vs {
+      font-size: .4em;
+      font-weight: 600;
+      margin: .35em 0 .15em;
+      letter-spacing: 0;
+      text-align: center
+    }
+
+    :root {
+      --vg: #fffaf0
+    }
+
+    #s-disc,
+    #s-cmp {
+      --vg: #fff2cc
+    }
+
+    .lead,
+    .sub,
+    ol,
+    .note {
+      color: var(--tx);
+      padding: 14px 20px;
+      margin-left: -20px;
+      background: radial-gradient(ellipse 78% 88% at 50% 50%, var(--vg) 55%, transparent 100%)
+    }
+
+    .lead,
+    .sub {
+      font-weight: 500
+    }
+
+    ol {
+      padding: 14px 20px 14px 2.6em
+    }
+
+    .note {
+      border-top: 0
+    }
+
+    .terms {
+      grid-template-columns: 1fr 1fr
+    }
+
+    .terms div {
+      padding: 8px 12px
+    }
+
+    .terms dt {
+      font-size: .98rem
+    }
+
+    .terms dd {
+      color: var(--tx);
+      font-size: .9rem;
+      line-height: 1.4
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      margin-top: 38px
+    }
+
+    .four {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 26px
+    }
+
+    .num {
+      display: inline-grid;
+      place-items: center;
+      width: 2.3rem;
+      height: 2.3rem;
+      border-radius: 50%;
+      background: var(--tx);
+      color: var(--y);
+      font-weight: 800;
+      margin-bottom: 12px
+    }
+
+    .four .card {
+      padding: 22px
+    }
+
+    .four h3 {
+      font-size: 1.25rem
+    }
+
+    .four p {
+      font-size: .95rem
+    }
+
+    .ctl.tr {
+      top: 18px;
+      bottom: auto;
+      left: auto;
+      right: 18px
+    }
+
+    @media(max-width:1100px) {
+      .four {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+
+    @media(max-width:700px) {
+
+      .four,
+      .steps {
+        grid-template-columns: 1fr
+      }
+    }
+
+    @media(max-width:900px) {
+      .steps {
+        grid-template-columns: 1fr
+      }
+
+      .cap {
+        bottom: 128px
+      }
+    }
+
+    .num.sm {
+      width: 1.7rem;
+      height: 1.7rem;
+      font-size: .85rem;
+      margin: 0 .6em 0 0
+    }
+
+    .terms dt {
+      display: flex;
+      align-items: center
+    }
+
+    .terms.one {
+      grid-template-columns: 1fr
+    }
+
+    #s-base .pnl {
+      min-height: clamp(380px, 56vh, 560px)
+    }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-top: 34px
+    }
+
+    .fact.s2 {
+      grid-column: span 2
+    }
+
+    .fact {
+      position: relative;
+      background: #fff;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--c) 11%, #fff), #fff 85%);
+      border: 1.5px solid var(--ln);
+      border-top: 5px solid var(--c);
+      border-radius: 18px;
+      overflow: hidden
+    }
+
+    .fact:nth-child(odd) {
+      rotate: -.5deg
+    }
+
+    .fact:nth-child(even) {
+      rotate: .5deg
+    }
+
+    .tag {
+      display: flex;
+      align-items: center;
+      gap: .6em;
+      color: var(--tx);
+      font-weight: 800;
+      font-size: 1.02rem;
+      line-height: 1.25;
+      padding: 14px 18px 0
+    }
+
+    .ic {
+      font-style: normal;
+      display: inline-grid;
+      place-items: center;
+      flex: none;
+      width: 1.7rem;
+      height: 1.7rem;
+      border-radius: 50%;
+      background: var(--c);
+      color: var(--tc, #fff);
+      font-size: .9rem;
+      font-weight: 800
+    }
+
+    .fact p {
+      color: var(--tx);
+      font-size: .98rem;
+      line-height: 1.5;
+      padding: 8px 18px 18px
+    }
+
+    .ro small {
+      font-size: .78rem;
+      color: #ffffffcc
+    }
+
+    @media(max-width:1100px) {
+      .facts {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+
+    @media(max-width:700px) {
+      .facts {
+        grid-template-columns: 1fr
+      }
+
+      .fact.s2 {
+        grid-column: auto
+      }
+    }
+
+    .rv.done {
+      transition: transform .25s ease-out, rotate .25s ease-out, box-shadow .25s ease-out, opacity .3s
+    }
+
+    .rv.done.fact:hover,
+    .rv.done.mem:hover {
+      transform: translateY(-4px);
+      rotate: 0deg;
+      box-shadow: 0 26px 46px -12px rgba(0, 0, 0, .42), 0 6px 14px rgba(0, 0, 0, .14)
+    }
+
+    #s-team {
+      background: #fff2ccc2
+    }
+
+    .team {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 26px;
+      margin-top: 38px
+    }
+
+    .mem {
+      background: #fffdf5;
+      border: 1.5px solid var(--ln);
+      border-radius: 20px;
+      padding: 28px 20px 26px;
+      text-align: center
+    }
+
+    .mem:nth-child(odd) {
+      rotate: -.5deg
+    }
+
+    .mem:nth-child(even) {
+      rotate: .5deg
+    }
+
+    .av {
+      display: inline-grid;
+      place-items: center;
+      width: 4.6rem;
+      height: 4.6rem;
+      border-radius: 50%;
+      background: var(--c);
+      color: var(--tc, #fff);
+      border: 2px solid var(--tx);
+      font-weight: 800;
+      font-size: 1.45rem;
+      margin-bottom: 14px
+    }
+
+    .mem h3 {
+      font-size: 1.3rem;
+      line-height: 1.2;
+      margin-bottom: 10px;
+      letter-spacing: -.01em
+    }
+
+    @media(max-width:900px) {
+      .team {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+
+    @media(max-width:500px) {
+      .team {
+        grid-template-columns: 1fr
+      }
+    }
+
+    :root {
+      --sh: 0 18px 38px -12px rgba(0, 0, 0, .34), 0 4px 10px rgba(0, 0, 0, .12)
+    }
+
+    .card,
+    .terms div,
+    .cmp {
+      box-shadow: var(--sh)
+    }
+
+    .pnl {
+      box-shadow: 0 28px 54px -18px rgba(0, 0, 0, .5), 0 4px 12px rgba(0, 0, 0, .16)
+    }
+
+    .fact,
+    .mem {
+      box-shadow: var(--sh)
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 40;
+      background: radial-gradient(ellipse 125% 115% at 50% 50%, transparent 58%, rgba(35, 24, 21, .2) 100%)
+    }
+
+    mark {
+      color: inherit;
+      background: linear-gradient(transparent 52%, rgba(255, 214, 10, .85) 52%);
+      padding: 0 .12em;
+      border-radius: 3px;
+      font-weight: 600;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone
+    }
+
+    mark.r {
+      background: linear-gradient(transparent 52%, rgba(214, 40, 40, .28) 52%)
+    }
+
+    .pts {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      gap: 9px;
+      margin: 14px 0 18px
+    }
+
+    .pts li {
+      position: relative;
+      padding-left: 1.15em;
+      font-size: .98rem;
+      line-height: 1.5;
+      color: var(--tx)
+    }
+
+    .pts li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: .6em;
+      width: .48em;
+      height: .48em;
+      border-radius: 50%;
+      background: var(--c)
+    }
+
+    footer {
+      padding: 40px 5vw 60px;
+      color: var(--mu);
+      font-size: .92rem;
+      border-top: 1.5px solid var(--ln)
+    }
+
+    @media(max-width:900px) {
+
+      .two,
+      .demo,
+      .demo.rev,
+      .terms {
+        grid-template-columns: 1fr
+      }
+
+      .demo.rev .pnl {
+        order: 2
+      }
+
+      .pnl {
+        min-height: 480px
+      }
+
+      nav div {
+        display: none
+      }
+
+      .cmp {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .cmp>i {
+        display: none
+      }
+
+      .cmp b {
+        grid-column: 1/-1;
+        padding-bottom: 0;
+        border: 0
+      }
+
+      .cmp>:nth-last-child(-n+3) {
+        border-bottom: 1.5px solid var(--ln)
+      }
+
+      .cmp>:last-child,
+      .cmp>:nth-last-child(2) {
+        border-bottom: 0
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+
+      .rv,
+      .ln>span {
+        transition: none;
+        transform: none;
+        opacity: 1
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="bar"></div><canvas id="bgc"></canvas>
+  <nav><b>Generative vs Discriminative</b>
+    <div><a href="#s-animal">Try it</a><a href="#s-base">Basics</a><a href="#s-idea">Two models</a><a
+        href="#s-disc">Discriminative</a><a href="#s-gen">Generative</a><a href="#s-cmp">Compare</a><a
+        href="#s-gan">GAN</a><a href="#s-team">Team</a></div>
+  </nav>
+
+  <header id="top"><canvas id="hero"></canvas>
+    <div class="hw">
+      <h1 class="hd"><span class="ln" style="--d:.1;--hx:-112%"><span class="g1">Telling things apart</span></span><span
+          class="ln vs" style="--d:.2;--hx:112%"><span>versus</span></span><span class="ln"
+          style="--d:.32;--hx:-112%"><span class="g2">Making new ones</span></span></h1>
+      <p class="sub rv" style="--d:.6">Generative and discriminative models are two ways a neural network can learn from
+        data. Scroll to meet each one, then play with a live demo of both.</p>
+    </div>
+    <span class="scr">Scroll to explore</span>
+  </header>
+
+  <!-- ── Interactive "One Animal → Three Numbers" Explainer ── -->
+  <section id="s-animal" style="background:radial-gradient(600px 400px at 50% 60%,#ffd60a30,transparent)">
+    <div class="wrap demo">
+      <div>
+        <h2 class="hd"><span class="ln"><span>One animal, three numbers</span></span></h2>
+        <p class="lead rv">Before the demos, let's build intuition. Every animal can be described by a few measurements.
+          Those measurements become <mark>coordinates in space</mark>. Drag the sliders and watch the dot move.</p>
+        <div class="animal-explainer rv" style="--d:.15">
+          <div class="ae-presets">
+            <button class="ae-pre active" data-ear="9" data-snout="3" data-wt="4" data-who="cat" id="ae-catA">🐱 Cat
+              A</button>
+            <button class="ae-pre" data-ear="8" data-snout="4" data-wt="5" data-who="cat" id="ae-catB">🐱 Cat B</button>
+            <button class="ae-pre" data-ear="4" data-snout="9" data-wt="20" data-who="dog" id="ae-dogA">🐶 Dog
+              A</button>
+            <button class="ae-pre" data-ear="3" data-snout="12" data-wt="30" data-who="dog" id="ae-dogB">🐶 Dog
+              B</button>
+          </div>
+          <div class="ae-sliders">
+            <label>Ear pointiness <b id="ae-ev">9</b><input type="range" id="ae-ear" min="0" max="10" step="0.1"
+                value="9"></label>
+            <label>Snout length <b id="ae-sv">3</b> cm<input type="range" id="ae-snout" min="0" max="15" step="0.1"
+                value="3"></label>
+            <label>Weight <b id="ae-wv">4</b> kg<input type="range" id="ae-wt" min="1" max="40" step="0.5"
+                value="4"></label>
+          </div>
+          <div class="ae-coords rv" style="--d:.25">
+            <span class="ae-coord">(<b id="ae-cx">9</b>, <b id="ae-cy">3</b>, <b id="ae-cz">4</b>)</span>
+            <span class="ae-label" id="ae-who">= Cat A's position in 3D space</span>
+          </div>
+          <p class="note rv" style="--d:.3">Cats have <strong>pointy ears, short snouts, low weight</strong> — they
+            cluster together. Dogs land in a different region. Two clouds of dots, two groups.</p>
+          <div class="ae-extra rv" style="--d:.35">
+            <p style="font-size:.92rem;color:var(--mu)"><strong>The same idea works for anything:</strong></p>
+            <ul class="pts" style="--c:var(--g)">
+              <li>A house → (size, bedrooms, age)</li>
+              <li>A student → (marks, attendance, hours studied)</li>
+              <li>A 28×28 photo → 784 numbers → a point in 784-D space</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="pnl rv" style="min-height:clamp(380px,56vh,560px)">
+        <canvas id="ae3d"></canvas>
+        <span class="hint">Drag to rotate<br><span class="dot" style="--c:#fff"></span>Cat<br><span class="dot"
+            style="--c:var(--r)"></span>Dog<br><span class="dot" style="--c:var(--g)"></span>You</span>
+        <div class="cap" style="bottom:18px">Pick a preset or drag the sliders. The gold dot is your animal — see how
+          cats and dogs form separate clouds.</div>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .animal-explainer {
+      margin-top: 22px
+    }
+
+    .ae-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px
+    }
+
+    .ae-pre {
+      background: #fff;
+      border: 1.5px solid var(--ln);
+      border-radius: 999px;
+      padding: .4em 1em;
+      font: 600 .92rem 'Bricolage Grotesque', system-ui, sans-serif;
+      cursor: pointer;
+      transition: all .25s var(--e)
+    }
+
+    .ae-pre:hover {
+      border-color: var(--tx);
+      transform: translateY(-1px)
+    }
+
+    .ae-pre.active {
+      background: var(--tx);
+      color: var(--y);
+      border-color: var(--tx)
+    }
+
+    .ae-sliders {
+      display: grid;
+      gap: 14px
+    }
+
+    .ae-sliders label {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 4px;
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--tx)
+    }
+
+    .ae-sliders label b {
+      color: var(--r);
+      font-variant-numeric: tabular-nums;
+      margin: 0 .15em
+    }
+
+    .ae-sliders input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--g), var(--r));
+      outline: none;
+      cursor: pointer
+    }
+
+    .ae-sliders input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--tx);
+      border: 2px solid var(--y);
+      cursor: grab;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .25)
+    }
+
+    .ae-sliders input[type=range]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--tx);
+      border: 2px solid var(--y);
+      cursor: grab;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .25)
+    }
+
+    .ae-coords {
+      margin-top: 18px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .ae-coord {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      color: var(--tx);
+      background: #fff4d6;
+      padding: .15em .5em;
+      border-radius: 12px;
+      border: 1.5px solid var(--ln)
+    }
+
+    .ae-coord b {
+      color: var(--r);
+      font-variant-numeric: tabular-nums
+    }
+
+    .ae-label {
+      color: var(--mu);
+      font-size: .95rem;
+      font-weight: 500
+    }
+
+    .ae-extra {
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: #ffffffd0;
+      border: 1.5px solid var(--ln);
+      border-radius: 14px
+    }
+  </style>
+
+  <section id="s-base">
+    <div class="wrap demo">
+      <div>
+        <h2 class="hd"><span class="ln"><span>Now scale it up</span></span></h2>
+        <p class="lead rv">You just placed 4 animals into 3D space. A real dataset has <mark>hundreds of photos</mark>,
+          each turned into numbers the same way. The clouds get bigger, but the idea is identical.</p>
+        <dl class="terms one rv">
+          <div>
+            <dt><span class="num sm">1</span>Features</dt>
+            <dd>Every photo becomes a list of numbers — just like ear pointiness, snout length and weight, but a neural
+              network picks the features automatically. A real photo has thousands.</dd>
+          </div>
+          <div>
+            <dt><span class="num sm">2</span>Labels and groups</dt>
+            <dd>An example may carry a label, like cat or dog. Points with the same label tend to gather into clouds,
+              exactly like the ones you just built.</dd>
+          </div>
+          <div>
+            <dt><span class="num sm">3</span>Two different questions</dt>
+            <dd>Where is the <mark class="r">boundary</mark> between the clouds? Or, what does a cloud <mark>look
+                like</mark>, so we can place a new member in it?</dd>
+          </div>
+        </dl>
+        <p class="lead rv">The first question leads to <mark class="r">discriminative</mark> models. The second leads to
+          <mark>generative</mark> models.</p>
+      </div>
+      <div class="pnl rv"><canvas id="pts3"></canvas><span class="hint">Drag to rotate<br><span class="dot"
+            style="--c:#fff"></span>Cat photo<br><span class="dot" style="--c:var(--r)"></span>Dog photo</span>
+        <div class="cap" style="bottom:18px">Hundreds of photos, each a dot. Same idea as your 4 animals — just more of
+          them.</div>
+      </div>
+    </div>
+  </section>
 
 
-<section id="s-idea"><div class="wrap">
-<h2 class="hd"><span class="ln"><span>Two jobs, two kinds of models</span></span></h2>
-<p class="lead rv">Imagine a pile of cat and dog photos. You can learn to <mark class="r">sort</mark> them, or you can learn to <mark>draw</mark> new ones. That is the whole difference.</p>
-<div class="two">
-<div class="card tilt rv" style="--c:var(--r)"><canvas class="ico" id="ci1"></canvas><h3>Discriminative: The Detective</h3><p>Looks at something and <mark class="r">decides which group</mark> it belongs to. It does not care what a cat looks like in general, only where the <mark class="r">boundary</mark> between cats and dogs sits.</p><p class="q">Is this photo a cat or a dog?</p>
-<ul class="pts"><li><strong>Gives you:</strong> a <mark class="r">label</mark> or a probability, such as "91% dog".</li><li><strong>Typical models:</strong> logistic regression, decision trees, support vector machines and neural-network classifiers.</li><li><strong>Strength:</strong> usually very accurate at sorting, and simpler to train.</li><li><strong>Limit:</strong> it cannot create new examples, because it never learns what a cat looks like, only how cats differ from dogs.</li></ul>
-<span class="chip">Learns P(label | data)</span></div>
-<div class="card tilt rv" style="--c:var(--g);--d:.15"><canvas class="ico" id="ci2"></canvas><h3>Generative: The Artist</h3><p>Studies many examples until it learns <mark>what each group looks like</mark>, then uses that knowledge to <mark>create brand-new ones</mark>. It models how the data itself is spread out.</p><p class="q">Show me a cat that never existed.</p>
-<ul class="pts"><li><strong>Gives you:</strong> <mark>new data</mark>, such as images, text or audio.</li><li><strong>Typical models:</strong> Naive Bayes, variational autoencoders (VAEs), GANs, diffusion models and large language models.</li><li><strong>Strength:</strong> it can create, fill in missing parts, and even classify by using Bayes' rule.</li><li><strong>Limit:</strong> it usually needs more data and computing power, and is harder to train.</li></ul>
-<span class="chip">Learns P(data)</span></div>
-</div></div></section>
+  <section id="s-idea">
+    <div class="wrap">
+      <h2 class="hd"><span class="ln"><span>Two jobs, two kinds of models</span></span></h2>
+      <p class="lead rv">Imagine a pile of cat and dog photos. You can learn to <mark class="r">sort</mark> them, or you
+        can learn to <mark>draw</mark> new ones. That is the whole difference.</p>
+      <div class="two">
+        <div class="card tilt rv" style="--c:var(--r)"><canvas class="ico" id="ci1"></canvas>
+          <h3>Discriminative: The Detective</h3>
+          <p>Looks at something and <mark class="r">decides which group</mark> it belongs to. It does not care what a
+            cat looks like in general, only where the <mark class="r">boundary</mark> between cats and dogs sits.</p>
+          <p class="q">Is this photo a cat or a dog?</p>
+          <ul class="pts">
+            <li><strong>Gives you:</strong> a <mark class="r">label</mark> or a probability, such as "91% dog".</li>
+            <li><strong>Typical models:</strong> logistic regression, decision trees, support vector machines and
+              neural-network classifiers.</li>
+            <li><strong>Strength:</strong> usually very accurate at sorting, and simpler to train.</li>
+            <li><strong>Limit:</strong> it cannot create new examples, because it never learns what a cat looks like,
+              only how cats differ from dogs.</li>
+          </ul>
+          <span class="chip">Learns P(label | data)</span>
+        </div>
+        <div class="card tilt rv" style="--c:var(--g);--d:.15"><canvas class="ico" id="ci2"></canvas>
+          <h3>Generative: The Artist</h3>
+          <p>Studies many examples until it learns <mark>what each group looks like</mark>, then uses that knowledge to
+            <mark>create brand-new ones</mark>. It models how the data itself is spread out.</p>
+          <p class="q">Show me a cat that never existed.</p>
+          <ul class="pts">
+            <li><strong>Gives you:</strong> <mark>new data</mark>, such as images, text or audio.</li>
+            <li><strong>Typical models:</strong> Naive Bayes, variational autoencoders (VAEs), GANs, diffusion models
+              and large language models.</li>
+            <li><strong>Strength:</strong> it can create, fill in missing parts, and even classify by using Bayes' rule.
+            </li>
+            <li><strong>Limit:</strong> it usually needs more data and computing power, and is harder to train.</li>
+          </ul>
+          <span class="chip">Learns P(data)</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<section id="s-disc"><div class="wrap demo">
-<div><h2 class="hd"><span class="ln"><span>A discriminative model</span></span><span class="ln" style="--d:.12"><span>draws the boundary</span></span></h2>
-<p class="lead rv">Each dot is a photo turned into 3 numbers. <span class="dot" style="--c:#fff"></span>Cats are white, <span class="dot" style="--c:var(--r)"></span>dogs are red. The model hunts for <mark class="r">the flat sheet</mark> that keeps them on <mark class="r">opposite sides</mark>.</p>
-<ol class="rv"><li><strong>Press Train.</strong> After each mistake, the sheet tilts a little toward the gap between the groups.</li><li><strong>Watch the yellow glows.</strong> Those are wrong guesses. They fade as accuracy climbs.</li><li><strong>Test a new point.</strong> A gold dot appears. The model has never seen it, yet it picks a side and says how sure it is.</li></ol>
-</div>
-<div class="pnl rv"><canvas id="disc"></canvas>
-<div class="ro"><span>Step <b id="ds">0</b></span><span>Accuracy <b id="da">0%</b></span><span class="res" id="dres"></span></div><span class="hint">Drag to rotate</span><div class="cap" id="dcap"></div>
-<div class="ctl"><button class="btn p" id="dtrain">Train</button><button class="btn" id="dtest">Test a new point</button><button class="btn" id="dpause" aria-pressed="false">Pause</button><button class="btn" id="dreset">Reset</button></div></div>
-</div>
-<div class="wrap facts">
-<div class="fact rv" style="--c:var(--r);--tc:#fff"><span class="tag"><i class="ic">&#10003;</i>Real, not a mock-up</span><p>This demo is real: it runs <mark>logistic regression with gradient descent</mark>, right in your browser. Nothing is pre-recorded.</p></div>
-<div class="fact rv" style="--c:var(--r);--tc:#fff;--d:.1"><span class="tag"><i class="ic">&#9733;</i>In the real world</span><p>Spam filters, face unlock and medical-scan screening all work on the same idea: draw a boundary, then check which side new data falls on.</p></div>
-<div class="fact rv" style="--c:var(--r);--tc:#fff;--d:.2"><span class="tag"><i class="ic">3</i>Why only 3 numbers?</span><p>A real photo has thousands of numbers, so its boundary lives in thousands of dimensions. We use 3 so you can actually see it.</p></div>
-<div class="fact rv" style="--c:var(--r);--tc:#fff;--d:.3"><span class="tag"><i class="ic">&asymp;</i>Beyond a flat sheet</span><p>Deep neural networks bend the boundary into complex curves. A flat sheet is the simplest case of the same idea.</p></div></div></section>
+  <section id="s-disc">
+    <div class="wrap demo">
+      <div>
+        <h2 class="hd"><span class="ln"><span>A discriminative model</span></span><span class="ln"
+            style="--d:.12"><span>draws the boundary</span></span></h2>
+        <p class="lead rv">Each dot is a photo turned into 3 numbers. <span class="dot" style="--c:#fff"></span>Cats are
+          white, <span class="dot" style="--c:var(--r)"></span>dogs are red. The model hunts for <mark class="r">the
+            flat sheet</mark> that keeps them on <mark class="r">opposite sides</mark>.</p>
+        <ol class="rv">
+          <li><strong>Press Train.</strong> After each mistake, the sheet tilts a little toward the gap between the
+            groups.</li>
+          <li><strong>Watch the yellow glows.</strong> Those are wrong guesses. They fade as accuracy climbs.</li>
+          <li><strong>Test a new point.</strong> A gold dot appears. The model has never seen it, yet it picks a side
+            and says how sure it is.</li>
+        </ol>
+      </div>
+      <div class="pnl rv"><canvas id="disc"></canvas>
+        <div class="ro"><span>Step <b id="ds">0</b></span><span>Accuracy <b id="da">0%</b></span><span class="res"
+            id="dres"></span></div><span class="hint">Drag to rotate</span>
+        <div class="cap" id="dcap"></div>
+        <div class="ctl"><button class="btn p" id="dtrain">Train</button><button class="btn" id="dtest">Test a new
+            point</button><button class="btn" id="dpause" aria-pressed="false">Pause</button><button class="btn"
+            id="dreset">Reset</button></div>
+      </div>
+    </div>
+    <div class="wrap facts">
+      <div class="fact rv" style="--c:var(--r);--tc:#fff"><span class="tag"><i class="ic">&#10003;</i>Real, not a
+          mock-up</span>
+        <p>This demo is real: it runs <mark>logistic regression with gradient descent</mark>, right in your browser.
+          Nothing is pre-recorded.</p>
+      </div>
+      <div class="fact rv" style="--c:var(--r);--tc:#fff;--d:.1"><span class="tag"><i class="ic">&#9733;</i>In the real
+          world</span>
+        <p>Spam filters, face unlock and medical-scan screening all work on the same idea: draw a boundary, then check
+          which side new data falls on.</p>
+      </div>
+      <div class="fact rv" style="--c:var(--r);--tc:#fff;--d:.2"><span class="tag"><i class="ic">3</i>Why only 3
+          numbers?</span>
+        <p>A real photo has thousands of numbers, so its boundary lives in thousands of dimensions. We use 3 so you can
+          actually see it.</p>
+      </div>
+      <div class="fact rv" style="--c:var(--r);--tc:#fff;--d:.3"><span class="tag"><i class="ic">&asymp;</i>Beyond a
+          flat sheet</span>
+        <p>Deep neural networks bend the boundary into complex curves. A flat sheet is the simplest case of the same
+          idea.</p>
+      </div>
+    </div>
+  </section>
 
-<section id="s-gen"><div class="wrap demo rev">
-<div class="pnl rv"><canvas id="gen"></canvas>
-<div class="ro"><span>Step <b id="gs">0</b></span><span>Critic catches fakes <b id="gc">98%</b></span><i class="bar"><u id="gb"></u></i><small>Lower means more convincing fakes</small></div><span class="hint">Drag to rotate<br><span class="dot" style="--c:#fff"></span>Real cat photos<br><span class="dot" style="--c:var(--g)"></span>Generated</span><div class="cap" id="gcap"></div>
-<div class="ctl"><button class="btn p" id="gtrain">Train generator</button><button class="btn" id="ggen">Generate new samples</button><button class="btn" id="gpause" aria-pressed="false">Pause</button><button class="btn" id="greset">Reset</button></div></div>
-<div><h2 class="hd"><span class="ln"><span>A generative model learns</span></span><span class="ln" style="--d:.12"><span>what real data looks like</span></span></h2>
-<p class="lead rv">This time the goal is <mark>a cat photo that never existed</mark>. Each dot is a cat photo turned into 3 numbers. Real cat photos share a look, so their dots form a pattern, <mark>the white knot</mark>. The generator tries to produce <mark>new dots that land on it</mark>.</p>
-<div class="flow rv"><span>Random noise</span><i>&rarr;</i><span>Generator</span><i>&rarr;</i><span>New cat photo</span></div>
-<dl class="terms rv"><div><dt><span class="dot" style="--c:#fff"></span>Real data</dt><dd>Real cat photos, each turned into 3 numbers. Here, the white knot.</dd></div>
-<div><dt><span class="dot" style="--c:var(--g)"></span>Noise</dt><dd>Random numbers the generator starts from. Here, the gold dots.</dd></div>
-<div><dt><span class="dot o" style="--c:var(--g)"></span>Generator</dt><dd>Turns noise into a new cat photo (a new dot). Training moves each dot toward the real ones.</dd></div>
-<div><dt><span class="dot o" style="--c:var(--r)"></span>Critic</dt><dd>A discriminator that guesses whether a photo is real or fake. Its feedback trains the generator.</dd></div></dl>
-<p class="note rv">Try it: press <strong>Train generator</strong>, then <strong>Generate new samples</strong>.</p></div>
-</div>
-<div class="wrap facts">
-<div class="fact s2 rv" style="--c:var(--g);--tc:#231815"><span class="tag"><i class="ic">&darr;</i>Why does the critic score go down?</span><p>The critic is not getting worse; <mark>the fakes are getting better</mark>. At the start, random noise is easy to spot, so the critic is right about 98% of the time. By the end, the fakes match the real data, so the critic can only guess, like <mark>a coin flip at 50%</mark>. A falling score means <mark>the generator is winning</mark>.</p></div>
-<div class="fact rv" style="--c:var(--g);--tc:#231815;--d:.1"><span class="tag"><i class="ic">~</i>Simplified on purpose</span><p>The dots glide to their targets to show what training achieves. A real generator learns this mapping from examples, step by step.</p></div>
-<div class="fact rv" style="--c:var(--g);--tc:#231815;--d:.2"><span class="tag"><i class="ic">&#9733;</i>In the real world</span><p>Image generators, chatbots, voice cloning and realistic face synthesis are all generative models.</p></div>
-<div class="fact s2 rv" style="--c:var(--g);--tc:#231815"><span class="tag"><i class="ic">&infin;</i>Noise is the seed</span><p>Different random noise gives a different new sample, so one trained generator can create endless variations.</p></div>
-<div class="fact s2 rv" style="--c:var(--g);--tc:#231815;--d:.1"><span class="tag"><i class="ic">?</i>Why a knot?</span><p>A real photo has thousands of numbers. We use 3 numbers and a knot so you can see the idea: real data forms a pattern, and generating means landing on it.</p></div></div></section>
+  <section id="s-gen">
+    <div class="wrap demo rev">
+      <div class="pnl rv"><canvas id="gen"></canvas>
+        <div class="ro"><span>Step <b id="gs">0</b></span><span>Critic catches fakes <b id="gc">98%</b></span><i
+            class="bar"><u id="gb"></u></i><small>Lower means more convincing fakes</small></div><span class="hint">Drag
+          to rotate<br><span class="dot" style="--c:#fff"></span>Real cat photos<br><span class="dot"
+            style="--c:var(--g)"></span>Generated</span>
+        <div class="cap" id="gcap"></div>
+        <div class="ctl"><button class="btn p" id="gtrain">Train generator</button><button class="btn"
+            id="ggen">Generate new samples</button><button class="btn" id="gpause"
+            aria-pressed="false">Pause</button><button class="btn" id="greset">Reset</button></div>
+      </div>
+      <div>
+        <h2 class="hd"><span class="ln"><span>A generative model learns</span></span><span class="ln"
+            style="--d:.12"><span>what real data looks like</span></span></h2>
+        <p class="lead rv">This time the goal is <mark>a cat photo that never existed</mark>. Each dot is a cat photo
+          turned into 3 numbers. Real cat photos share a look, so their dots form a pattern, <mark>the white
+            knot</mark>. The generator tries to produce <mark>new dots that land on it</mark>.</p>
+        <div class="flow rv"><span>Random noise</span><i>&rarr;</i><span>Generator</span><i>&rarr;</i><span>New cat
+            photo</span></div>
+        <dl class="terms rv">
+          <div>
+            <dt><span class="dot" style="--c:#fff"></span>Real data</dt>
+            <dd>Real cat photos, each turned into 3 numbers. Here, the white knot.</dd>
+          </div>
+          <div>
+            <dt><span class="dot" style="--c:var(--g)"></span>Noise</dt>
+            <dd>Random numbers the generator starts from. Here, the gold dots.</dd>
+          </div>
+          <div>
+            <dt><span class="dot o" style="--c:var(--g)"></span>Generator</dt>
+            <dd>Turns noise into a new cat photo (a new dot). Training moves each dot toward the real ones.</dd>
+          </div>
+          <div>
+            <dt><span class="dot o" style="--c:var(--r)"></span>Critic</dt>
+            <dd>A discriminator that guesses whether a photo is real or fake. Its feedback trains the generator.</dd>
+          </div>
+        </dl>
+        <p class="note rv">Try it: press <strong>Train generator</strong>, then <strong>Generate new samples</strong>.
+        </p>
+      </div>
+    </div>
+    <div class="wrap facts">
+      <div class="fact s2 rv" style="--c:var(--g);--tc:#231815"><span class="tag"><i class="ic">&darr;</i>Why does the
+          critic score go down?</span>
+        <p>The critic is not getting worse; <mark>the fakes are getting better</mark>. At the start, random noise is
+          easy to spot, so the critic is right about 98% of the time. By the end, the fakes match the real data, so the
+          critic can only guess, like <mark>a coin flip at 50%</mark>. A falling score means <mark>the generator is
+            winning</mark>.</p>
+      </div>
+      <div class="fact rv" style="--c:var(--g);--tc:#231815;--d:.1"><span class="tag"><i class="ic">~</i>Simplified on
+          purpose</span>
+        <p>The dots glide to their targets to show what training achieves. A real generator learns this mapping from
+          examples, step by step.</p>
+      </div>
+      <div class="fact rv" style="--c:var(--g);--tc:#231815;--d:.2"><span class="tag"><i class="ic">&#9733;</i>In the
+          real world</span>
+        <p>Image generators, chatbots, voice cloning and realistic face synthesis are all generative models.</p>
+      </div>
+      <div class="fact s2 rv" style="--c:var(--g);--tc:#231815"><span class="tag"><i class="ic">&infin;</i>Noise is the
+          seed</span>
+        <p>Different random noise gives a different new sample, so one trained generator can create endless variations.
+        </p>
+      </div>
+      <div class="fact s2 rv" style="--c:var(--g);--tc:#231815;--d:.1"><span class="tag"><i class="ic">?</i>Why a
+          knot?</span>
+        <p>A real photo has thousands of numbers. We use 3 numbers and a knot so you can see the idea: real data forms a
+          pattern, and generating means landing on it.</p>
+      </div>
+    </div>
+  </section>
 
-<section id="s-cmp"><canvas id="cb"></canvas><div class="wrap">
-<h2 class="hd"><span class="ln"><span>Side by side</span></span></h2>
-<div class="cmp rv"><i></i><h3 style="color:var(--r)">Discriminative</h3><h3 style="color:var(--gd)">Generative</h3>
-<b>What it learns</b><p>Where the boundary between groups sits</p><p>What each group looks like</p>
-<b>Question it answers</b><p>Which group is this?</p><p>What would a new one look like?</p>
-<b>What you get</b><p>A label or a probability</p><p>New data: images, text, audio</p>
-<b>Everyday examples</b><p>Spam filters, face unlock, medical scans</p><p>Image generators, chatbots, voice cloning</p>
-<b>Training</b><p>Usually simpler to train</p><p>Usually harder to train and tune</p></div>
-</div></section>
+  <section id="s-cmp"><canvas id="cb"></canvas>
+    <div class="wrap">
+      <h2 class="hd"><span class="ln"><span>Side by side</span></span></h2>
+      <div class="cmp rv"><i></i>
+        <h3 style="color:var(--r)">Discriminative</h3>
+        <h3 style="color:var(--gd)">Generative</h3>
+        <b>What it learns</b>
+        <p>Where the boundary between groups sits</p>
+        <p>What each group looks like</p>
+        <b>Question it answers</b>
+        <p>Which group is this?</p>
+        <p>What would a new one look like?</p>
+        <b>What you get</b>
+        <p>A label or a probability</p>
+        <p>New data: images, text, audio</p>
+        <b>Everyday examples</b>
+        <p>Spam filters, face unlock, medical scans</p>
+        <p>Image generators, chatbots, voice cloning</p>
+        <b>Training</b>
+        <p>Usually simpler to train</p>
+        <p>Usually harder to train and tune</p>
+      </div>
+    </div>
+  </section>
 
-<section id="s-gan"><div class="wrap">
-<h2 class="hd"><span class="ln"><span>Better together: the GAN</span></span></h2>
-<p class="lead rv">A generative adversarial network (GAN) puts both kinds of model into <mark>one game</mark>. The generator (the artist) <mark>creates gold samples</mark>, and the discriminator (the detective) is <mark class="r">the red gate</mark> that decides what passes as real. At first, the gate catches most of the fakes. As the artist improves, almost nothing is caught.</p>
-<div class="pnl wide rv"><canvas id="gan"></canvas><div class="ro"><span>Fakes that fool the detective: <b id="gp">10%</b></span></div><div class="ctl tr"><button class="btn p" id="ppause" aria-pressed="false">Pause</button></div><span class="lb l">Generator (The Artist)</span><span class="lb r">Discriminator (The Detective)</span></div>
-<div class="four">
-<div class="fact rv" style="--c:var(--r);--tc:#fff"><span class="tag"><i class="ic">1</i>The game</span><p>The generator tries to fool the discriminator, while the discriminator tries to catch the generator. That rivalry is why the network is called adversarial. GANs were introduced in 2014 by Ian Goodfellow and his colleagues.</p></div>
-<div class="fact rv" style="--c:var(--g);--tc:#231815;--d:.1"><span class="tag"><i class="ic">2</i>Why it works</span><p>Every time the detective catches a fake, the artist learns what gave it away and improves. In the ideal end state, the detective can only guess, so it is right about 50% of the time.</p></div>
-<div class="fact rv" style="--c:var(--r);--tc:#fff;--d:.2"><span class="tag"><i class="ic">3</i>Where it is used</span><p>Creating realistic faces and images, sharpening blurry photos, producing extra training data, and transferring artistic styles from one picture to another.</p></div>
-<div class="fact rv" style="--c:var(--g);--tc:#231815;--d:.3"><span class="tag"><i class="ic">4</i>Watch out</span><p>GANs can be hard to train. In one common failure, called mode collapse, the generator keeps producing the same few outputs. Many newer image generators use diffusion models instead.</p></div></div>
-<p class="big rv"><span style="color:var(--r)">Discriminative models decide.</span> <span style="color:var(--gd)">Generative models create.</span></p>
-</div></section>
-<section id="s-team"><div class="wrap">
-<h2 class="hd"><span class="ln"><span>The team behind it</span></span></h2>
-<div class="team">
-<div class="mem rv" style="--c:var(--r);--tc:#fff"><span class="av">AP</span><h3>Arya Pore</h3><span class="chip">33267</span></div>
-<div class="mem rv" style="--c:var(--g);--tc:#231815;--d:.1"><span class="av">SP</span><h3>Shanay Puntambekar</h3><span class="chip">33273</span></div>
-<div class="mem rv" style="--c:var(--r);--tc:#fff;--d:.2"><span class="av">AJ</span><h3>Atharva Jaysingpure</h3><span class="chip">33237</span></div>
-<div class="mem rv" style="--c:var(--g);--tc:#231815;--d:.3"><span class="av">RG</span><h3>Rishi Gandhi</h3><span class="chip">33226</span></div></div>
-</div></section>
+  <section id="s-gan">
+    <div class="wrap">
+      <h2 class="hd"><span class="ln"><span>Better together: the GAN</span></span></h2>
+      <p class="lead rv">A generative adversarial network (GAN) puts both kinds of model into <mark>one game</mark>. The
+        generator (the artist) <mark>creates gold samples</mark>, and the discriminator (the detective) is <mark
+          class="r">the red gate</mark> that decides what passes as real. At first, the gate catches most of the fakes.
+        As the artist improves, almost nothing is caught.</p>
+      <div class="pnl wide rv"><canvas id="gan"></canvas>
+        <div class="ro"><span>Fakes that fool the detective: <b id="gp">10%</b></span></div>
+        <div class="ctl tr"><button class="btn p" id="ppause" aria-pressed="false">Pause</button></div><span
+          class="lb l">Generator (The Artist)</span><span class="lb r">Discriminator (The Detective)</span>
+      </div>
+      <div class="four">
+        <div class="fact rv" style="--c:var(--r);--tc:#fff"><span class="tag"><i class="ic">1</i>The game</span>
+          <p>The generator tries to fool the discriminator, while the discriminator tries to catch the generator. That
+            rivalry is why the network is called adversarial. GANs were introduced in 2014 by Ian Goodfellow and his
+            colleagues.</p>
+        </div>
+        <div class="fact rv" style="--c:var(--g);--tc:#231815;--d:.1"><span class="tag"><i class="ic">2</i>Why it
+            works</span>
+          <p>Every time the detective catches a fake, the artist learns what gave it away and improves. In the ideal end
+            state, the detective can only guess, so it is right about 50% of the time.</p>
+        </div>
+        <div class="fact rv" style="--c:var(--r);--tc:#fff;--d:.2"><span class="tag"><i class="ic">3</i>Where it is
+            used</span>
+          <p>Creating realistic faces and images, sharpening blurry photos, producing extra training data, and
+            transferring artistic styles from one picture to another.</p>
+        </div>
+        <div class="fact rv" style="--c:var(--g);--tc:#231815;--d:.3"><span class="tag"><i class="ic">4</i>Watch
+            out</span>
+          <p>GANs can be hard to train. In one common failure, called mode collapse, the generator keeps producing the
+            same few outputs. Many newer image generators use diffusion models instead.</p>
+        </div>
+      </div>
+      <p class="big rv"><span style="color:var(--r)">Discriminative models decide.</span> <span
+          style="color:var(--gd)">Generative models create.</span></p>
+    </div>
+  </section>
+  <section id="s-team">
+    <div class="wrap">
+      <h2 class="hd"><span class="ln"><span>The team behind it</span></span></h2>
+      <div class="team">
+        <div class="mem rv" style="--c:var(--r);--tc:#fff"><span class="av">AP</span>
+          <h3>Arya Pore</h3><span class="chip">33267</span>
+        </div>
+        <div class="mem rv" style="--c:var(--g);--tc:#231815;--d:.1"><span class="av">SP</span>
+          <h3>Shanay Puntambekar</h3><span class="chip">33273</span>
+        </div>
+        <div class="mem rv" style="--c:var(--r);--tc:#fff;--d:.2"><span class="av">AJ</span>
+          <h3>Atharva Jaysingpure</h3><span class="chip">33237</span>
+        </div>
+        <div class="mem rv" style="--c:var(--g);--tc:#231815;--d:.3"><span class="av">RG</span>
+          <h3>Rishi Gandhi</h3><span class="chip">33226</span>
+        </div>
+        <div class="mem rv" style="--c:var(--r);--tc:#fff;--d:.4"><span class="av">AD</span>
+          <h3>Aditya Dwivedi</h3><span class="chip">33201</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
-<script>
-const RM=matchMedia('(prefers-reduced-motion:reduce)').matches,$=id=>document.getElementById(id),rnd=Math.random;
-const io=new IntersectionObserver(es=>es.forEach(e=>{const t=e.target;
-if(e.intersectionRatio>=.12){if(!t.classList.contains('in')){t.classList.add('in');clearTimeout(t._d);if(t.classList.contains('rv'))t._d=setTimeout(()=>t.classList.add('done'),1800)}}
-else if(e.intersectionRatio===0){t.classList.remove('in','done');clearTimeout(t._d)}}),{threshold:[0,.12]});
-document.querySelectorAll('.rv,.hd').forEach(e=>io.observe(e));
-document.querySelectorAll('.tilt').forEach(c=>{c.addEventListener('pointermove',e=>{const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform=`perspective(800px) rotateY(${x*10}deg) rotateX(${-y*10}deg)`});c.addEventListener('pointerleave',()=>c.style.transform='')});
-let L=null;if(window.Lenis&&!RM){L=new Lenis({lerp:.09});(function r(t){L.raf(t);requestAnimationFrame(r)})(0)}
-document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{if(L){e.preventDefault();L.scrollTo(a.getAttribute('href'))}}));
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script>
+    const RM = matchMedia('(prefers-reduced-motion:reduce)').matches, $ = id => document.getElementById(id), rnd = Math.random;
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      const t = e.target;
+      if (e.intersectionRatio >= .12) { if (!t.classList.contains('in')) { t.classList.add('in'); clearTimeout(t._d); if (t.classList.contains('rv')) t._d = setTimeout(() => t.classList.add('done'), 1800) } }
+      else if (e.intersectionRatio === 0) { t.classList.remove('in', 'done'); clearTimeout(t._d) }
+    }), { threshold: [0, .12] });
+    document.querySelectorAll('.rv,.hd').forEach(e => io.observe(e));
+    document.querySelectorAll('.tilt').forEach(c => { c.addEventListener('pointermove', e => { const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5; c.style.transform = `perspective(800px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg)` }); c.addEventListener('pointerleave', () => c.style.transform = '') });
+    let L = null; if (window.Lenis && !RM) { L = new Lenis({ lerp: .09 }); (function r(t) { L.raf(t); requestAnimationFrame(r) })(0) }
+    document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', e => { if (L) { e.preventDefault(); L.scrollTo(a.getAttribute('href')) } }));
 
-const T=THREE,gauss=()=>{let u=0;while(!u)u=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*rnd())},sg=z=>1/(1+Math.exp(-z));
-const cRe=new T.Color('#e5252a'),cGo=new T.Color('#f2a900'),cYe=new T.Color('#ffe14d'),cWh=new T.Color('#fff4de'),Z=new T.Vector3(0,0,1),all=[];
-const tex=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),r=g.createRadialGradient(32,32,0,32,32,32);r.addColorStop(0,'#fff');r.addColorStop(.55,'#fff');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.fillRect(0,0,64,64);return new T.CanvasTexture(c)})();
-function pts(n,size,add){const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(new Float32Array(n*3),3));geo.setAttribute('color',new T.BufferAttribute(new Float32Array(n*3),3));return new T.Points(geo,new T.PointsMaterial({size,map:tex,vertexColors:true,transparent:true,depthWrite:false,blending:add?T.AdditiveBlending:T.NormalBlending}))}
-function stage(id,fov,z,lit){const cv=$(id),r=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});r.setPixelRatio(Math.min(devicePixelRatio,2));
-const s=new T.Scene(),cam=new T.PerspectiveCamera(fov,1,.1,100),g=new T.Group(),o={r,s,cam,g,vis:true,drag:false,ry:0,rx:0,spin:0};cam.position.z=z;s.add(g);
-if(lit){s.add(new T.AmbientLight(0xffffff,.75));const d=new T.DirectionalLight(0xffffff,.9);d.position.set(3,5,6);s.add(d)}
-const fit=()=>{const w=cv.clientWidth,h=cv.clientHeight;r.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()};new ResizeObserver(fit).observe(cv);fit();
-new IntersectionObserver(e=>o.vis=e[0].isIntersecting).observe(cv);
-cv.addEventListener('pointerdown',e=>{o.drag=true;o.lx=e.clientX;o.ly=e.clientY;cv.setPointerCapture(e.pointerId)});
-cv.addEventListener('pointermove',e=>{if(o.drag){o.ry+=(e.clientX-o.lx)*.008;o.rx+=(e.clientY-o.ly)*.008;o.lx=e.clientX;o.ly=e.clientY}});
-addEventListener('pointerup',()=>o.drag=false);all.push(o);return o}
-const mat=c=>new T.MeshStandardMaterial({color:c,roughness:.35,metalness:.2}),sheet=(w,col,op)=>{const p=new T.Mesh(new T.PlaneGeometry(w,w),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,side:T.DoubleSide,depthWrite:false})),g=new T.Group();g.add(p,new T.LineSegments(new T.EdgesGeometry(p.geometry),new T.LineBasicMaterial({color:col,transparent:true,opacity:.85})));return g};
+    const T = THREE, gauss = () => { let u = 0; while (!u) u = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(6.2832 * rnd()) }, sg = z => 1 / (1 + Math.exp(-z));
+    const cRe = new T.Color('#e5252a'), cGo = new T.Color('#f2a900'), cYe = new T.Color('#ffe14d'), cWh = new T.Color('#fff4de'), Z = new T.Vector3(0, 0, 1), all = [];
+    const tex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, '#fff'); r.addColorStop(.55, '#fff'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); return new T.CanvasTexture(c) })();
+    function pts(n, size, add) { const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(new Float32Array(n * 3), 3)); geo.setAttribute('color', new T.BufferAttribute(new Float32Array(n * 3), 3)); return new T.Points(geo, new T.PointsMaterial({ size, map: tex, vertexColors: true, transparent: true, depthWrite: false, blending: add ? T.AdditiveBlending : T.NormalBlending })) }
+    function stage(id, fov, z, lit) {
+      const cv = $(id), r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); r.setPixelRatio(Math.min(devicePixelRatio, 2));
+      const s = new T.Scene(), cam = new T.PerspectiveCamera(fov, 1, .1, 100), g = new T.Group(), o = { r, s, cam, g, vis: true, drag: false, ry: 0, rx: 0, spin: 0 }; cam.position.z = z; s.add(g);
+      if (lit) { s.add(new T.AmbientLight(0xffffff, .75)); const d = new T.DirectionalLight(0xffffff, .9); d.position.set(3, 5, 6); s.add(d) }
+      const fit = () => { const w = cv.clientWidth, h = cv.clientHeight; r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix() }; new ResizeObserver(fit).observe(cv); fit();
+      new IntersectionObserver(e => o.vis = e[0].isIntersecting).observe(cv);
+      cv.addEventListener('pointerdown', e => { o.drag = true; o.lx = e.clientX; o.ly = e.clientY; cv.setPointerCapture(e.pointerId) });
+      cv.addEventListener('pointermove', e => { if (o.drag) { o.ry += (e.clientX - o.lx) * .008; o.rx += (e.clientY - o.ly) * .008; o.lx = e.clientX; o.ly = e.clientY } });
+      addEventListener('pointerup', () => o.drag = false); all.push(o); return o
+    }
+    const mat = c => new T.MeshStandardMaterial({ color: c, roughness: .35, metalness: .2 }), sheet = (w, col, op) => { const p = new T.Mesh(new T.PlaneGeometry(w, w), new T.MeshBasicMaterial({ color: col, transparent: true, opacity: op, side: T.DoubleSide, depthWrite: false })), g = new T.Group(); g.add(p, new T.LineSegments(new T.EdgesGeometry(p.geometry), new T.LineBasicMaterial({ color: col, transparent: true, opacity: .85 }))); return g };
 
-let dfr=0;function pauser(b,o){b.onclick=()=>{o.paused=!o.paused;b.textContent=o.paused?'Resume':'Pause';b.setAttribute('aria-pressed',o.paused)}}
-function unp(o,b){o.paused=false;b.textContent='Pause';b.setAttribute('aria-pressed','false')}
-// Hero: sphere split by a moving plane + ring of dots
-const H=stage('hero',50,9),NS=2600,hs=pts(NS,.09),hp=hs.geometry.attributes.position.array,hc=hs.geometry.attributes.color.array;H.own=true;
-for(let i=0;i<NS;i++){const u=rnd()*2-1,a=rnd()*6.2832,s=Math.sqrt(1-u*u),r=2.2+gauss()*.07;hp.set([r*s*Math.cos(a),r*u,r*s*Math.sin(a)],i*3)}
-const hr=pts(900,.07),rp=hr.geometry.attributes.position.array,rc=hr.geometry.attributes.color.array;
-for(let i=0;i<900;i++){const a=rnd()*6.2832,r=3.5+gauss()*.1;rp.set([r*Math.cos(a),gauss()*.1,r*Math.sin(a)],i*3);rc.set(i%6?[.14,.1,.08]:[.84,.16,.16],i*3)}
-const rg=new T.Group();rg.rotation.set(.9,0,.35);rg.add(hr);const hpl=sheet(5.8,0x231815,.07);hpl.children[0].geometry=new T.CircleGeometry(2.9,64);hpl.remove(hpl.children[1]);
-H.g.add(hs,rg,hpl);let mx=0,my=0,sx=0,sy=0;addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5});
+    let dfr = 0; function pauser(b, o) { b.onclick = () => { o.paused = !o.paused; b.textContent = o.paused ? 'Resume' : 'Pause'; b.setAttribute('aria-pressed', o.paused) } }
+    function unp(o, b) { o.paused = false; b.textContent = 'Pause'; b.setAttribute('aria-pressed', 'false') }
+    // Hero: sphere split by a moving plane + ring of dots
+    const H = stage('hero', 50, 9), NS = 2600, hs = pts(NS, .09), hp = hs.geometry.attributes.position.array, hc = hs.geometry.attributes.color.array; H.own = true;
+    for (let i = 0; i < NS; i++) { const u = rnd() * 2 - 1, a = rnd() * 6.2832, s = Math.sqrt(1 - u * u), r = 2.2 + gauss() * .07; hp.set([r * s * Math.cos(a), r * u, r * s * Math.sin(a)], i * 3) }
+    const hr = pts(900, .07), rp = hr.geometry.attributes.position.array, rc = hr.geometry.attributes.color.array;
+    for (let i = 0; i < 900; i++) { const a = rnd() * 6.2832, r = 3.5 + gauss() * .1; rp.set([r * Math.cos(a), gauss() * .1, r * Math.sin(a)], i * 3); rc.set(i % 6 ? [.14, .1, .08] : [.84, .16, .16], i * 3) }
+    const rg = new T.Group(); rg.rotation.set(.9, 0, .35); rg.add(hr); const hpl = sheet(5.8, 0x231815, .07); hpl.children[0].geometry = new T.CircleGeometry(2.9, 64); hpl.remove(hpl.children[1]);
+    H.g.add(hs, rg, hpl); let mx = 0, my = 0, sx = 0, sy = 0; addEventListener('pointermove', e => { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5 });
 
-// Card icons (3D)
-const sph=new T.SphereGeometry(.16,16,12),I1=stage('ci1',40,6,true),I2=stage('ci2',40,6,true);I1.spin=I2.spin=.012;
-for(let i=0;i<30;i++){const c=i%2,m=new T.Mesh(sph,mat(c?0xd62828:0xffe9c2));m.position.set((c?.85:-.85)+gauss()*.3,(c?.45:-.45)+gauss()*.3,gauss()*.3);I1.g.add(m)}
-const ig=sheet(3.2,0x231815,.1);ig.quaternion.setFromUnitVectors(Z,new T.Vector3(1.7,.9,0).normalize());I1.g.add(ig);
-I2.g.add(new T.Mesh(new T.TorusKnotGeometry(.8,.25,120,14),mat(0xf0a500)));const ob=[];for(let i=0;i<16;i++){const m=new T.Mesh(sph,mat(0xffd60a));m.scale.setScalar(.7);ob.push(m);I2.g.add(m)}
+    // Card icons (3D)
+    const sph = new T.SphereGeometry(.16, 16, 12), I1 = stage('ci1', 40, 6, true), I2 = stage('ci2', 40, 6, true); I1.spin = I2.spin = .012;
+    for (let i = 0; i < 30; i++) { const c = i % 2, m = new T.Mesh(sph, mat(c ? 0xd62828 : 0xffe9c2)); m.position.set((c ? .85 : -.85) + gauss() * .3, (c ? .45 : -.45) + gauss() * .3, gauss() * .3); I1.g.add(m) }
+    const ig = sheet(3.2, 0x231815, .1); ig.quaternion.setFromUnitVectors(Z, new T.Vector3(1.7, .9, 0).normalize()); I1.g.add(ig);
+    I2.g.add(new T.Mesh(new T.TorusKnotGeometry(.8, .25, 120, 14), mat(0xf0a500))); const ob = []; for (let i = 0; i < 16; i++) { const m = new T.Mesh(sph, mat(0xffd60a)); m.scale.setScalar(.7); ob.push(m); I2.g.add(m) }
 
-// ── Interactive Animal Explainer 3D ──
-const AE=stage('ae3d',50,12,true);AE.spin=.003;
-// Axis helper: thin lines + labels
-function axLine(from,to,col){const g=new T.BufferGeometry().setFromPoints([new T.Vector3(...from),new T.Vector3(...to)]);return new T.Line(g,new T.LineBasicMaterial({color:col,transparent:true,opacity:.45}))}
-AE.g.add(axLine([0,0,0],[5.5,0,0],0xffffff),axLine([0,0,0],[0,5.5,0],0xffffff),axLine([0,0,0],[0,0,5.5],0xffffff));
-function axLabel(txt,pos,col){const c2=document.createElement('canvas');c2.width=256;c2.height=64;const x=c2.getContext('2d');x.font='bold 32px sans-serif';x.fillStyle=col;x.fillText(txt,4,40);const t2=new T.CanvasTexture(c2),sp=new T.Sprite(new T.SpriteMaterial({map:t2,transparent:true,depthWrite:false}));sp.scale.set(2,.5,1);sp.position.set(...pos);return sp}
-AE.g.add(axLabel('Ear',[5.8,0,0],'#fff'),axLabel('Snout',[0,5.8,0],'#fff'),axLabel('Weight',[0,0,5.8],'#fff'));
-// Normalise to [0,5] for nice 3D range
-const aeN=(v,lo,hi)=>(v-lo)/(hi-lo)*5;
-// Preset animals: {ear, snout, wt, cat}
-const aeAnimals=[{ear:9,snout:3,wt:4,cat:true,name:'Cat A'},{ear:8,snout:4,wt:5,cat:true,name:'Cat B'},{ear:4,snout:9,wt:20,cat:false,name:'Dog A'},{ear:3,snout:12,wt:30,cat:false,name:'Dog B'}];
-const aeSph=new T.SphereGeometry(.18,16,12);
-aeAnimals.forEach(a=>{
-  const col=a.cat?0xfff4de:0xd62828;
-  const m=new T.Mesh(aeSph,new T.MeshStandardMaterial({color:col,roughness:.35,metalness:.2,emissive:a.cat?0x222211:0x331111}));
-  m.position.set(aeN(a.ear,0,10),aeN(a.snout,0,15),aeN(a.wt,1,40));
-  AE.g.add(m);
-  // tiny label
-  AE.g.add(axLabel(a.name,[m.position.x,m.position.y+.4,m.position.z],a.cat?'#fff4de':'#ff8a8a'));
-});
-// User dot (gold, larger)
-const aeUser=new T.Mesh(new T.SphereGeometry(.25,20,14),new T.MeshStandardMaterial({color:0xf2a900,roughness:.2,metalness:.4,emissive:0x553300}));
-aeUser.position.set(aeN(9,0,10),aeN(3,0,15),aeN(4,1,40));AE.g.add(aeUser);
-// Pulsing ring around user dot
-const aeRing=new T.Mesh(new T.RingGeometry(.28,.34,32),new T.MeshBasicMaterial({color:0xffd60a,transparent:true,opacity:.5,side:T.DoubleSide,depthWrite:false}));
-aeUser.add(aeRing);
-// Centre the scene
-AE.g.position.set(-2.5,-2.5,-2.5);
-// Slider & button wiring
-const aeEar=$('ae-ear'),aeSnout=$('ae-snout'),aeWt=$('ae-wt');
-function aeUpdate(){
-  const e=+aeEar.value,s=+aeSnout.value,w=+aeWt.value;
-  $('ae-ev').textContent=e;$('ae-sv').textContent=s;$('ae-wv').textContent=w;
-  $('ae-cx').textContent=e;$('ae-cy').textContent=s;$('ae-cz').textContent=w;
-  aeUser.position.set(aeN(e,0,10),aeN(s,0,15),aeN(w,1,40));
-  // Determine nearest preset for label
-  let best='Your custom animal',bd=Infinity;
-  aeAnimals.forEach(a=>{const d=Math.abs(a.ear-e)+Math.abs(a.snout-s)+Math.abs(a.wt-w);if(d<bd){bd=d;best=a.name}});
-  $('ae-who').textContent=bd<1?`= ${best}'s position in 3D space`:`= Your animal at (${e}, ${s}, ${w})`;
-}
-aeEar.oninput=aeSnout.oninput=aeWt.oninput=()=>{document.querySelectorAll('.ae-pre').forEach(b=>b.classList.remove('active'));aeUpdate()};
-document.querySelectorAll('.ae-pre').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('.ae-pre').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-  aeEar.value=b.dataset.ear;aeSnout.value=b.dataset.snout;aeWt.value=b.dataset.wt;aeUpdate();
-});
+    // ── Interactive Animal Explainer 3D ──
+    const AE = stage('ae3d', 50, 12, true); AE.spin = .003;
+    // Axis helper: thin lines + labels
+    function axLine(from, to, col) { const g = new T.BufferGeometry().setFromPoints([new T.Vector3(...from), new T.Vector3(...to)]); return new T.Line(g, new T.LineBasicMaterial({ color: col, transparent: true, opacity: .45 })) }
+    AE.g.add(axLine([0, 0, 0], [5.5, 0, 0], 0xffffff), axLine([0, 0, 0], [0, 5.5, 0], 0xffffff), axLine([0, 0, 0], [0, 0, 5.5], 0xffffff));
+    function axLabel(txt, pos, col) { const c2 = document.createElement('canvas'); c2.width = 256; c2.height = 64; const x = c2.getContext('2d'); x.font = 'bold 32px sans-serif'; x.fillStyle = col; x.fillText(txt, 4, 40); const t2 = new T.CanvasTexture(c2), sp = new T.Sprite(new T.SpriteMaterial({ map: t2, transparent: true, depthWrite: false })); sp.scale.set(2, .5, 1); sp.position.set(...pos); return sp }
+    AE.g.add(axLabel('Ear', [5.8, 0, 0], '#fff'), axLabel('Snout', [0, 5.8, 0], '#fff'), axLabel('Weight', [0, 0, 5.8], '#fff'));
+    // Normalise to [0,5] for nice 3D range
+    const aeN = (v, lo, hi) => (v - lo) / (hi - lo) * 5;
+    // Preset animals: {ear, snout, wt, cat}
+    const aeAnimals = [{ ear: 9, snout: 3, wt: 4, cat: true, name: 'Cat A' }, { ear: 8, snout: 4, wt: 5, cat: true, name: 'Cat B' }, { ear: 4, snout: 9, wt: 20, cat: false, name: 'Dog A' }, { ear: 3, snout: 12, wt: 30, cat: false, name: 'Dog B' }];
+    const aeSph = new T.SphereGeometry(.18, 16, 12);
+    aeAnimals.forEach(a => {
+      const col = a.cat ? 0xfff4de : 0xd62828;
+      const m = new T.Mesh(aeSph, new T.MeshStandardMaterial({ color: col, roughness: .35, metalness: .2, emissive: a.cat ? 0x222211 : 0x331111 }));
+      m.position.set(aeN(a.ear, 0, 10), aeN(a.snout, 0, 15), aeN(a.wt, 1, 40));
+      AE.g.add(m);
+      // tiny label
+      AE.g.add(axLabel(a.name, [m.position.x, m.position.y + .4, m.position.z], a.cat ? '#fff4de' : '#ff8a8a'));
+    });
+    // User dot (gold, larger)
+    const aeUser = new T.Mesh(new T.SphereGeometry(.25, 20, 14), new T.MeshStandardMaterial({ color: 0xf2a900, roughness: .2, metalness: .4, emissive: 0x553300 }));
+    aeUser.position.set(aeN(9, 0, 10), aeN(3, 0, 15), aeN(4, 1, 40)); AE.g.add(aeUser);
+    // Pulsing ring around user dot
+    const aeRing = new T.Mesh(new T.RingGeometry(.28, .34, 32), new T.MeshBasicMaterial({ color: 0xffd60a, transparent: true, opacity: .5, side: T.DoubleSide, depthWrite: false }));
+    aeUser.add(aeRing);
+    // Centre the scene
+    AE.g.position.set(-2.5, -2.5, -2.5);
+    // Slider & button wiring
+    const aeEar = $('ae-ear'), aeSnout = $('ae-snout'), aeWt = $('ae-wt');
+    function aeUpdate() {
+      const e = +aeEar.value, s = +aeSnout.value, w = +aeWt.value;
+      $('ae-ev').textContent = e; $('ae-sv').textContent = s; $('ae-wv').textContent = w;
+      $('ae-cx').textContent = e; $('ae-cy').textContent = s; $('ae-cz').textContent = w;
+      aeUser.position.set(aeN(e, 0, 10), aeN(s, 0, 15), aeN(w, 1, 40));
+      // Determine nearest preset for label
+      let best = 'Your custom animal', bd = Infinity;
+      aeAnimals.forEach(a => { const d = Math.abs(a.ear - e) + Math.abs(a.snout - s) + Math.abs(a.wt - w); if (d < bd) { bd = d; best = a.name } });
+      $('ae-who').textContent = bd < 1 ? `= ${best}'s position in 3D space` : `= Your animal at (${e}, ${s}, ${w})`;
+    }
+    aeEar.oninput = aeSnout.oninput = aeWt.oninput = () => { document.querySelectorAll('.ae-pre').forEach(b => b.classList.remove('active')); aeUpdate() };
+    document.querySelectorAll('.ae-pre').forEach(b => b.onclick = () => {
+      document.querySelectorAll('.ae-pre').forEach(x => x.classList.remove('active')); b.classList.add('active');
+      aeEar.value = b.dataset.ear; aeSnout.value = b.dataset.snout; aeWt.value = b.dataset.wt; aeUpdate();
+    });
 
-// Basics: one dot = one example
-const S=stage('pts3',45,9),sp3=pts(200,.2,1);S.spin=.003;
-for(let i=0;i<200;i++){const c=i%2,m=c?1:-1,col=c?cRe:cWh;sp3.geometry.attributes.position.array.set([m*1.2+gauss()*.8,m*.7+gauss()*.8,m*.5+gauss()*.8],i*3);sp3.geometry.attributes.color.array.set([col.r,col.g,col.b],i*3)}S.g.add(sp3);
+    // Basics: one dot = one example
+    const S = stage('pts3', 45, 9), sp3 = pts(200, .2, 1); S.spin = .003;
+    for (let i = 0; i < 200; i++) { const c = i % 2, m = c ? 1 : -1, col = c ? cRe : cWh; sp3.geometry.attributes.position.array.set([m * 1.2 + gauss() * .8, m * .7 + gauss() * .8, m * .5 + gauss() * .8], i * 3); sp3.geometry.attributes.color.array.set([col.r, col.g, col.b], i * 3) } S.g.add(sp3);
 
-// Discriminative demo: real logistic regression in 3D
-const D=stage('disc',45,9),DN=240,DX=[],DY=[],dp=pts(DN,.2,1);D.spin=.002;
-for(let i=0;i<DN;i++){const c=i%2,m=c?1:-1;DX.push([m*1.2+gauss()*.9,m*.7+gauss()*.9,m*.5+gauss()*.9]);DY.push(c)}
-dp.geometry.attributes.position.array.set(DX.flat());D.g.add(dp);const dpl=sheet(6,0xffd60a,.14);D.g.add(dpl);
-let W,B,steps,run,tests=[];const f=x=>W[0]*x[0]+W[1]*x[1]+W[2]*x[2]+B;
-const dstg=[['Stage 1 of 3: Random start','The sheet starts in a random spot, so it cuts through both groups and many cats and dogs land on the wrong side (yellow glows). Press Train.'],['Stage 2 of 3: Learning','After each round of guesses, the sheet tilts and shifts a little to cut down the mistakes. Watch the yellow glows fade.'],['Stage 3 of 3: Boundary found','The sheet now sits in the gap between cats and dogs. The few glows left are look-alikes near the edge. Press Test a new point.']];let dcs=-1;
-function dcap(i){if(i===dcs)return;dcs=i;$('dcap').innerHTML='<b>'+dstg[i][0]+'</b>'+dstg[i][1]}
-function dView(){const n=new T.Vector3(...W),l=n.length();n.divideScalar(l);dpl.quaternion.setFromUnitVectors(Z,n);dpl.position.copy(n).multiplyScalar(-B/l);
-const c=dp.geometry.attributes.color.array;let ok=0;DX.forEach((x,i)=>{const good=(f(x)>0?1:0)===DY[i],col=DY[i]?cRe:cWh,k=good?0:.85;ok+=good;c.set([col.r+(cYe.r-col.r)*k,col.g+(cYe.g-col.g)*k,col.b+(cYe.b-col.b)*k],i*3)});
-dp.geometry.attributes.color.needsUpdate=true;$('ds').textContent=steps;dcap(steps===0?0:steps<240?1:2);$('da').textContent=Math.round(ok/DN*100)+'%'}
-function dReset(){W=[-.3,1.1,-.9];B=.6;steps=0;run=false;tests.forEach(t=>D.g.remove(t));tests=[];$('dres').textContent='';dView()}
-function dStep(){const g=[0,0,0];let gb=0;DX.forEach((x,i)=>{const e=sg(f(x))-DY[i];g[0]+=e*x[0];g[1]+=e*x[1];g[2]+=e*x[2];gb+=e});for(let k=0;k<3;k++)W[k]-=.5*g[k]/DN;B-=.5*gb/DN;steps++}
-const dbt=$('dpause');$('dtrain').onclick=()=>{if(steps>=240)dReset();run=true;unp(D,dbt)};$('dreset').onclick=()=>{dReset();unp(D,dbt)};pauser(dbt,D);
-$('dtest').onclick=()=>{const c=rnd()<.5?0:1,m=c?1:-1,x=[m*1.2+gauss()*1.1,m*.7+gauss()*1.1,m*.5+gauss()*1.1],s=new T.Mesh(new T.SphereGeometry(.15,16,16),new T.MeshBasicMaterial({color:0xf2a900}));
-s.position.set(...x);D.g.add(s);tests.push(s);if(tests.length>5)D.g.remove(tests.shift());const p=sg(f(x)),lab=p>.5?1:0;
-setTimeout(()=>{s.material.color.copy(lab?cRe:cWh);$('dres').textContent=`New point: ${lab?'dog':'cat'}, ${Math.round((lab?p:1-p)*100)}% sure`},700)};dReset();
+    // Discriminative demo: real logistic regression in 3D
+    const D = stage('disc', 45, 9), DN = 240, DX = [], DY = [], dp = pts(DN, .2, 1); D.spin = .002;
+    for (let i = 0; i < DN; i++) { const c = i % 2, m = c ? 1 : -1; DX.push([m * 1.2 + gauss() * .9, m * .7 + gauss() * .9, m * .5 + gauss() * .9]); DY.push(c) }
+    dp.geometry.attributes.position.array.set(DX.flat()); D.g.add(dp); const dpl = sheet(6, 0xffd60a, .14); D.g.add(dpl);
+    let W, B, steps, run, tests = []; const f = x => W[0] * x[0] + W[1] * x[1] + W[2] * x[2] + B;
+    const dstg = [['Stage 1 of 3: Random start', 'The sheet starts in a random spot, so it cuts through both groups and many cats and dogs land on the wrong side (yellow glows). Press Train.'], ['Stage 2 of 3: Learning', 'After each round of guesses, the sheet tilts and shifts a little to cut down the mistakes. Watch the yellow glows fade.'], ['Stage 3 of 3: Boundary found', 'The sheet now sits in the gap between cats and dogs. The few glows left are look-alikes near the edge. Press Test a new point.']]; let dcs = -1;
+    function dcap(i) { if (i === dcs) return; dcs = i; $('dcap').innerHTML = '<b>' + dstg[i][0] + '</b>' + dstg[i][1] }
+    function dView() {
+      const n = new T.Vector3(...W), l = n.length(); n.divideScalar(l); dpl.quaternion.setFromUnitVectors(Z, n); dpl.position.copy(n).multiplyScalar(-B / l);
+      const c = dp.geometry.attributes.color.array; let ok = 0; DX.forEach((x, i) => { const good = (f(x) > 0 ? 1 : 0) === DY[i], col = DY[i] ? cRe : cWh, k = good ? 0 : .85; ok += good; c.set([col.r + (cYe.r - col.r) * k, col.g + (cYe.g - col.g) * k, col.b + (cYe.b - col.b) * k], i * 3) });
+      dp.geometry.attributes.color.needsUpdate = true; $('ds').textContent = steps; dcap(steps === 0 ? 0 : steps < 240 ? 1 : 2); $('da').textContent = Math.round(ok / DN * 100) + '%'
+    }
+    function dReset() { W = [-.3, 1.1, -.9]; B = .6; steps = 0; run = false; tests.forEach(t => D.g.remove(t)); tests = []; $('dres').textContent = ''; dView() }
+    function dStep() { const g = [0, 0, 0]; let gb = 0; DX.forEach((x, i) => { const e = sg(f(x)) - DY[i]; g[0] += e * x[0]; g[1] += e * x[1]; g[2] += e * x[2]; gb += e }); for (let k = 0; k < 3; k++)W[k] -= .5 * g[k] / DN; B -= .5 * gb / DN; steps++ }
+    const dbt = $('dpause'); $('dtrain').onclick = () => { if (steps >= 240) dReset(); run = true; unp(D, dbt) }; $('dreset').onclick = () => { dReset(); unp(D, dbt) }; pauser(dbt, D);
+    $('dtest').onclick = () => {
+      const c = rnd() < .5 ? 0 : 1, m = c ? 1 : -1, x = [m * 1.2 + gauss() * 1.1, m * .7 + gauss() * 1.1, m * .5 + gauss() * 1.1], s = new T.Mesh(new T.SphereGeometry(.15, 16, 16), new T.MeshBasicMaterial({ color: 0xf2a900 }));
+      s.position.set(...x); D.g.add(s); tests.push(s); if (tests.length > 5) D.g.remove(tests.shift()); const p = sg(f(x)), lab = p > .5 ? 1 : 0;
+      setTimeout(() => { s.material.color.copy(lab ? cRe : cWh); $('dres').textContent = `New point: ${lab ? 'dog' : 'cat'}, ${Math.round((lab ? p : 1 - p) * 100)}% sure` }, 700)
+    }; dReset();
 
-// Generative demo: noise gradually becomes a trefoil knot; critic accuracy falls toward 50%
-const G=stage('gen',45,10),GN=700,gz=pts(GN,.13,1),gr=pts(GN,.1,1);G.spin=.002;
-const knot=u=>[Math.sin(u)+2*Math.sin(2*u),Math.cos(u)-2*Math.cos(2*u),-Math.sin(3*u)],GP=gz.geometry.attributes.position.array;
-for(let i=0;i<GN;i++){const q=cGo.clone().lerp(cYe,rnd());gr.geometry.attributes.position.array.set(knot(rnd()*6.2832).map(v=>v*.6+gauss()*.05),i*3);gr.geometry.attributes.color.array.set([cWh.r,cWh.g,cWh.b],i*3);gz.geometry.attributes.color.array.set([q.r,q.g,q.b],i*3)}
-const tp=[];for(let i=0;i<120;i++)tp.push(new T.Vector3(...knot(i/120*6.2832).map(v=>v*.6)));
-G.g.add(gr,gz,new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(tp,true),240,.05,8,true),new T.MeshBasicMaterial({color:0xfff4de,transparent:true,opacity:.4,depthWrite:false})));let Zs=[],Ss=[],Rr=[],gt=0,gtg=0,born=1;
-function resample(){for(let i=0;i<GN;i++){Zs[i]=[gauss(),gauss(),gauss()];Ss[i]=knot(rnd()*6.2832).map(v=>v*.6+gauss()*.06);Rr[i]=rnd()}}resample();
-const gbt=$('gpause');$('gtrain').onclick=()=>{gtg=1;unp(G,gbt)};$('greset').onclick=()=>{gtg=0;unp(G,gbt)};$('ggen').onclick=()=>{resample();born=0;unp(G,gbt)};pauser(gbt,G);
+    // Generative demo: noise gradually becomes a trefoil knot; critic accuracy falls toward 50%
+    const G = stage('gen', 45, 10), GN = 700, gz = pts(GN, .13, 1), gr = pts(GN, .1, 1); G.spin = .002;
+    const knot = u => [Math.sin(u) + 2 * Math.sin(2 * u), Math.cos(u) - 2 * Math.cos(2 * u), -Math.sin(3 * u)], GP = gz.geometry.attributes.position.array;
+    for (let i = 0; i < GN; i++) { const q = cGo.clone().lerp(cYe, rnd()); gr.geometry.attributes.position.array.set(knot(rnd() * 6.2832).map(v => v * .6 + gauss() * .05), i * 3); gr.geometry.attributes.color.array.set([cWh.r, cWh.g, cWh.b], i * 3); gz.geometry.attributes.color.array.set([q.r, q.g, q.b], i * 3) }
+    const tp = []; for (let i = 0; i < 120; i++)tp.push(new T.Vector3(...knot(i / 120 * 6.2832).map(v => v * .6)));
+    G.g.add(gr, gz, new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(tp, true), 240, .05, 8, true), new T.MeshBasicMaterial({ color: 0xfff4de, transparent: true, opacity: .4, depthWrite: false }))); let Zs = [], Ss = [], Rr = [], gt = 0, gtg = 0, born = 1;
+    function resample() { for (let i = 0; i < GN; i++) { Zs[i] = [gauss(), gauss(), gauss()]; Ss[i] = knot(rnd() * 6.2832).map(v => v * .6 + gauss() * .06); Rr[i] = rnd() } } resample();
+    const gbt = $('gpause'); $('gtrain').onclick = () => { gtg = 1; unp(G, gbt) }; $('greset').onclick = () => { gtg = 0; unp(G, gbt) }; $('ggen').onclick = () => { resample(); born = 0; unp(G, gbt) }; pauser(gbt, G);
 
-const stg=[['Stage 1 of 3: Noise','The generator has learned nothing yet, so its gold dots are random noise, nothing like a cat photo. The white knot marks where real cat photos live.'],['Stage 2 of 3: Learning','The critic keeps catching fakes, so the generator nudges every gold dot toward the white knot. This is training.'],['Stage 3 of 3: Looks real','The critic can only guess now (about 50%), so the gold dots pass as real cat photos. Press Generate new samples: fresh noise in, new cat photos out.']];let cs=-1;
-function cap(i){if(i===cs)return;cs=i;$('gcap').innerHTML='<b>'+stg[i][0]+'</b>'+stg[i][1]}
+    const stg = [['Stage 1 of 3: Noise', 'The generator has learned nothing yet, so its gold dots are random noise, nothing like a cat photo. The white knot marks where real cat photos live.'], ['Stage 2 of 3: Learning', 'The critic keeps catching fakes, so the generator nudges every gold dot toward the white knot. This is training.'], ['Stage 3 of 3: Looks real', 'The critic can only guess now (about 50%), so the gold dots pass as real cat photos. Press Generate new samples: fresh noise in, new cat photos out.']]; let cs = -1;
+    function cap(i) { if (i === cs) return; cs = i; $('gcap').innerHTML = '<b>' + stg[i][0] + '</b>' + stg[i][1] }
 
-// Compare backdrop: floating glossy shapes that turn as you scroll
-const C=stage('cb',50,9,true),geos=[new T.IcosahedronGeometry(.7),new T.OctahedronGeometry(.75),new T.TorusGeometry(.6,.22,16,40),new T.TorusKnotGeometry(.5,.17,80,12),new T.DodecahedronGeometry(.65),new T.SphereGeometry(.55,24,16)],cols=[0xd62828,0xf0a500,0xffd60a,0xffffff],cm=[];
-for(let i=0;i<14;i++){const m=new T.Mesh(geos[i%6],mat(cols[i%4])),w=C.cam.aspect*4.2,sd=i%2?1:-1;m.position.set(sd*w*(.62+rnd()*.38),(rnd()*2-1)*3.6,-2+rnd()*2.5);m.scale.setScalar(.7+rnd()*.7);m.userData={s:.4+rnd()*.7,p:rnd()*6,y:m.position.y};C.g.add(m);cm.push(m)}
+    // Compare backdrop: floating glossy shapes that turn as you scroll
+    const C = stage('cb', 50, 9, true), geos = [new T.IcosahedronGeometry(.7), new T.OctahedronGeometry(.75), new T.TorusGeometry(.6, .22, 16, 40), new T.TorusKnotGeometry(.5, .17, 80, 12), new T.DodecahedronGeometry(.65), new T.SphereGeometry(.55, 24, 16)], cols = [0xd62828, 0xf0a500, 0xffd60a, 0xffffff], cm = [];
+    for (let i = 0; i < 14; i++) { const m = new T.Mesh(geos[i % 6], mat(cols[i % 4])), w = C.cam.aspect * 4.2, sd = i % 2 ? 1 : -1; m.position.set(sd * w * (.62 + rnd() * .38), (rnd() * 2 - 1) * 3.6, -2 + rnd() * 2.5); m.scale.setScalar(.7 + rnd() * .7); m.userData = { s: .4 + rnd() * .7, p: rnd() * 6, y: m.position.y }; C.g.add(m); cm.push(m) }
 
-// Scroll-reactive background: a small data cloud, first sorted into two groups, then reshaped into a knot (the story of the page)
-const Q=stage('bgc',50,10),BN=420,bp=pts(BN,.085),bps=bp.geometry.attributes.position.array,bcs=bp.geometry.attributes.color.array,bA=[],bB=[],bR=[],bK=[],cIn=new T.Color(0x3a2a20),bpl=sheet(3.4,0x231815,.1);Q.own=true;
-for(let i=0;i<BN;i++){const c=i%2,m=c?1:-1;bA.push([m*1.1+gauss()*.55,m*.65+gauss()*.55,m*.45+gauss()*.55]);bB.push(knot(rnd()*6.2832).map(v=>v*.62+gauss()*.04));bR.push(rnd());bK.push(c)}
-bpl.quaternion.setFromUnitVectors(Z,new T.Vector3(1.1,.65,.45).normalize());Q.g.add(bp,bpl);let psy=0,sv=0,nry=0;
-function bgStep(n){const p=scrollY/Math.max(1,document.documentElement.scrollHeight-innerHeight),v=scrollY-psy;psy=scrollY;sv=sv*.92+v*.0009;nry+=sv;
-const m=Math.max(0,Math.min(1,(p-.28)/.3)),me=m*m*(3-2*m),w=Q.cam.aspect*4.66;
-for(let i=0;i<BN;i++){let k=Math.max(0,Math.min(1,me*1.4-bR[i]*.4));k=k*k*(3-2*k);const b=bK[i]?cRe:cIn;for(let j=0;j<3;j++)bps[i*3+j]=bA[i][j]+(bB[i][j]-bA[i][j])*k;bcs[i*3]=b.r+(cGo.r-b.r)*k;bcs[i*3+1]=b.g+(cGo.g-b.g)*k;bcs[i*3+2]=b.b+(cGo.b-b.b)*k}
-bp.geometry.attributes.position.needsUpdate=bp.geometry.attributes.color.needsUpdate=true;bpl.children.forEach((c,j)=>c.material.opacity=(j?.7:.1)*(1-me));
-Q.g.position.set(Math.cos(p*6.283)*w*.7,Math.sin(p*7)*.8-.2,0);Q.g.scale.setScalar(Math.min(.9,Q.cam.aspect*.6));Q.g.rotation.set(.2*Math.sin(p*5),p*5+nry+(RM?0:n*.00025),0);
-$('bgc').style.opacity=Math.max(0,Math.min(1,(scrollY/innerHeight-.35)*1.6))*.45}
+    // Scroll-reactive background: a small data cloud, first sorted into two groups, then reshaped into a knot (the story of the page)
+    const Q = stage('bgc', 50, 10), BN = 420, bp = pts(BN, .085), bps = bp.geometry.attributes.position.array, bcs = bp.geometry.attributes.color.array, bA = [], bB = [], bR = [], bK = [], cIn = new T.Color(0x3a2a20), bpl = sheet(3.4, 0x231815, .1); Q.own = true;
+    for (let i = 0; i < BN; i++) { const c = i % 2, m = c ? 1 : -1; bA.push([m * 1.1 + gauss() * .55, m * .65 + gauss() * .55, m * .45 + gauss() * .55]); bB.push(knot(rnd() * 6.2832).map(v => v * .62 + gauss() * .04)); bR.push(rnd()); bK.push(c) }
+    bpl.quaternion.setFromUnitVectors(Z, new T.Vector3(1.1, .65, .45).normalize()); Q.g.add(bp, bpl); let psy = 0, sv = 0, nry = 0;
+    function bgStep(n) {
+      const p = scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight), v = scrollY - psy; psy = scrollY; sv = sv * .92 + v * .0009; nry += sv;
+      const m = Math.max(0, Math.min(1, (p - .28) / .3)), me = m * m * (3 - 2 * m), w = Q.cam.aspect * 4.66;
+      for (let i = 0; i < BN; i++) { let k = Math.max(0, Math.min(1, me * 1.4 - bR[i] * .4)); k = k * k * (3 - 2 * k); const b = bK[i] ? cRe : cIn; for (let j = 0; j < 3; j++)bps[i * 3 + j] = bA[i][j] + (bB[i][j] - bA[i][j]) * k; bcs[i * 3] = b.r + (cGo.r - b.r) * k; bcs[i * 3 + 1] = b.g + (cGo.g - b.g) * k; bcs[i * 3 + 2] = b.b + (cGo.b - b.b) * k }
+      bp.geometry.attributes.position.needsUpdate = bp.geometry.attributes.color.needsUpdate = true; bpl.children.forEach((c, j) => c.material.opacity = (j ? .7 : .1) * (1 - me));
+      Q.g.position.set(Math.cos(p * 6.283) * w * .7, Math.sin(p * 7) * .8 - .2, 0); Q.g.scale.setScalar(Math.min(.9, Q.cam.aspect * .6)); Q.g.rotation.set(.2 * Math.sin(p * 5), p * 5 + nry + (RM ? 0 : n * .00025), 0);
+      $('bgc').style.opacity = Math.max(0, Math.min(1, (scrollY / innerHeight - .35) * 1.6)) * .45
+    }
 
-// GAN duel: generator emits gold samples, the red gate lets more through as the generator improves
-const P=stage('gan',45,9,true),gk=new T.Mesh(new T.TorusKnotGeometry(.7,.22,100,14),new T.MeshStandardMaterial({color:0xffc233,roughness:.3,metalness:.3,emissive:0x553300}));gk.position.x=-3.6;
-const gpl=sheet(3.6,0xff3b3b,.2);gpl.position.x=2.6;gpl.rotation.y=Math.PI/2;P.g.add(gk,gpl);P.g.position.x=-.9;
-const dot=new T.SphereGeometry(.09,10,8),ps=[];for(let i=0;i<60;i++){const m=new T.Mesh(dot,new T.MeshBasicMaterial({color:0xffd60a}));m.visible=false;P.g.add(m);ps.push({m,s:-1})}
-let last=0,acc=0,gclk=0;pauser($('ppause'),P);
-function ganStep(n){const dt=Math.min(.05,(n-last)/1000);last=n;if(P.paused)return;gclk+=dt;const ph=(gclk%18)/18,pp=.08+.87*ph*ph*(3-2*ph);acc+=dt;
-if(acc>.1){acc=0;const q=ps.find(o=>o.s<0);if(q){const sd=(1-pp)*.9+.12;q.m.position.set(-3-.9,gauss()*sd,gauss()*sd);q.m.position.x=-3;q.m.material.color.set(0xffd60a);q.m.visible=true;q.s=0;q.vy=0;q.pass=rnd()<pp}}
-ps.forEach(q=>{if(q.s<0)return;const m=q.m,p=m.position;
-if(q.s===0){p.x+=dt*1.15;if(p.x>=2.5){if(q.pass)q.s=1;else{q.s=2;q.vy=0;m.material.color.set(0xff3b3b)}}}
-else if(q.s===1){p.x+=dt*1.15;if(p.x>5.4){q.s=-1;m.visible=false}}
-else{q.vy-=dt*5;p.y+=q.vy*dt;p.x-=dt*.5;if(p.y<-3.2){q.s=-1;m.visible=false}}});
-gk.rotation.x+=RM?0:.01;gk.rotation.y+=RM?0:.012;$('gp').textContent=Math.round(pp*100)+'%'}
+    // GAN duel: generator emits gold samples, the red gate lets more through as the generator improves
+    const P = stage('gan', 45, 9, true), gk = new T.Mesh(new T.TorusKnotGeometry(.7, .22, 100, 14), new T.MeshStandardMaterial({ color: 0xffc233, roughness: .3, metalness: .3, emissive: 0x553300 })); gk.position.x = -3.6;
+    const gpl = sheet(3.6, 0xff3b3b, .2); gpl.position.x = 2.6; gpl.rotation.y = Math.PI / 2; P.g.add(gk, gpl); P.g.position.x = -.9;
+    const dot = new T.SphereGeometry(.09, 10, 8), ps = []; for (let i = 0; i < 60; i++) { const m = new T.Mesh(dot, new T.MeshBasicMaterial({ color: 0xffd60a })); m.visible = false; P.g.add(m); ps.push({ m, s: -1 }) }
+    let last = 0, acc = 0, gclk = 0; pauser($('ppause'), P);
+    function ganStep(n) {
+      const dt = Math.min(.05, (n - last) / 1000); last = n; if (P.paused) return; gclk += dt; const ph = (gclk % 18) / 18, pp = .08 + .87 * ph * ph * (3 - 2 * ph); acc += dt;
+      if (acc > .1) { acc = 0; const q = ps.find(o => o.s < 0); if (q) { const sd = (1 - pp) * .9 + .12; q.m.position.set(-3 - .9, gauss() * sd, gauss() * sd); q.m.position.x = -3; q.m.material.color.set(0xffd60a); q.m.visible = true; q.s = 0; q.vy = 0; q.pass = rnd() < pp } }
+      ps.forEach(q => {
+        if (q.s < 0) return; const m = q.m, p = m.position;
+        if (q.s === 0) { p.x += dt * 1.15; if (p.x >= 2.5) { if (q.pass) q.s = 1; else { q.s = 2; q.vy = 0; m.material.color.set(0xff3b3b) } } }
+        else if (q.s === 1) { p.x += dt * 1.15; if (p.x > 5.4) { q.s = -1; m.visible = false } }
+        else { q.vy -= dt * 5; p.y += q.vy * dt; p.x -= dt * .5; if (p.y < -3.2) { q.s = -1; m.visible = false } }
+      });
+      gk.rotation.x += RM ? 0 : .01; gk.rotation.y += RM ? 0 : .012; $('gp').textContent = Math.round(pp * 100) + '%'
+    }
 
-(function tick(n){requestAnimationFrame(tick);
-if(H.vis){const a=(RM?0:n)*.0004,nv=new T.Vector3(Math.sin(a*1.3),Math.cos(a),Math.sin(a*.7+1)).normalize(),w=innerWidth>900;sx+=(mx-sx)*.05;sy+=(my-sy)*.05;H.ry+=RM?0:.0015;hpl.quaternion.setFromUnitVectors(Z,nv);
-for(let i=0;i<NS;i++){const k=Math.max(0,Math.min(1,(hp[i*3]*nv.x+hp[i*3+1]*nv.y+hp[i*3+2]*nv.z)*.8+.5));hc[i*3]=cRe.r+(cGo.r-cRe.r)*k;hc[i*3+1]=cRe.g+(cGo.g-cRe.g)*k;hc[i*3+2]=cRe.b+(cGo.b-cRe.b)*k}
-hs.geometry.attributes.color.needsUpdate=true;hr.rotation.y+=RM?0:.004;
-H.g.position.set(w?3.4:0,(w?0:-1.7)+scrollY*.004,0);H.g.scale.setScalar(w?.95:.72);H.g.rotation.y=H.ry+sx*.4;H.g.rotation.x=sy*.3+scrollY*.0006}
-if(AE.vis){const pulse=.5+.3*Math.sin(n*.004);aeRing.material.opacity=pulse;aeRing.scale.setScalar(1+.15*Math.sin(n*.003));aeRing.lookAt(AE.cam.position)}
-if(D.vis&&!D.paused){if(run&&++dfr%2===0){dStep();dView();if(steps>=240)run=false}tests.forEach((t,i)=>t.scale.setScalar(i===tests.length-1?1+.25*Math.sin(n*.008):1))}
-if(G.vis){const d=gtg-gt;if(!G.paused){gt+=Math.abs(d)<.012?d:Math.sign(d)*(d>0?.002:.012);born=Math.min(1,born+.025)}gz.material.size=.13*born;
-const e=gt*gt*(3-2*gt);for(let i=0;i<GN;i++){let k=Math.max(0,Math.min(1,e*1.5-Rr[i]*.5));k=k*k*(3-2*k);for(let j=0;j<3;j++)GP[i*3+j]=Zs[i][j]+(Ss[i][j]-Zs[i][j])*k}
-gz.geometry.attributes.position.needsUpdate=true;const cr=Math.round(50+48*(1-e)*(1-e));cap(gt<.02?0:gt>.97?2:1);$('gs').textContent=Math.round(gt*500);$('gc').textContent=cr+'%';$('gb').style.width=cr+'%'}
-if(P.vis){ganStep(n);P.g.scale.setScalar(Math.min(1,P.cam.aspect/1.9))}
-if(C.vis){const sc=scrollY*.0012,t=RM?0:n;cm.forEach(m=>{const u=m.userData;m.rotation.x=sc*u.s*3+t*.0003*u.s;m.rotation.y=t*.0004*u.s;m.position.y=u.y+Math.sin(t*.001*u.s+u.p)*.25})}
-bgStep(n);
-if(I2.vis)ob.forEach((m,i)=>{const a=(RM?0:n)*.001+i*.4;m.position.set(Math.cos(a)*1.7,Math.sin(a*2)*.35,Math.sin(a)*1.7)});
-all.forEach(s=>{if(!s.vis)return;if(!s.own){if(s.spin&&!s.drag&&!RM&&!s.paused)s.ry+=s.spin;s.g.rotation.y=s.ry;s.g.rotation.x=Math.max(-1,Math.min(1,s.rx))}s.r.render(s.s,s.cam)});
-$('bar').style.transform=`scaleX(${scrollY/Math.max(1,document.documentElement.scrollHeight-innerHeight)})`})(0);
-</script></body></html>
+    (function tick(n) {
+      requestAnimationFrame(tick);
+      if (H.vis) {
+        const a = (RM ? 0 : n) * .0004, nv = new T.Vector3(Math.sin(a * 1.3), Math.cos(a), Math.sin(a * .7 + 1)).normalize(), w = innerWidth > 900; sx += (mx - sx) * .05; sy += (my - sy) * .05; H.ry += RM ? 0 : .0015; hpl.quaternion.setFromUnitVectors(Z, nv);
+        for (let i = 0; i < NS; i++) { const k = Math.max(0, Math.min(1, (hp[i * 3] * nv.x + hp[i * 3 + 1] * nv.y + hp[i * 3 + 2] * nv.z) * .8 + .5)); hc[i * 3] = cRe.r + (cGo.r - cRe.r) * k; hc[i * 3 + 1] = cRe.g + (cGo.g - cRe.g) * k; hc[i * 3 + 2] = cRe.b + (cGo.b - cRe.b) * k }
+        hs.geometry.attributes.color.needsUpdate = true; hr.rotation.y += RM ? 0 : .004;
+        H.g.position.set(w ? 3.4 : 0, (w ? 0 : -1.7) + scrollY * .004, 0); H.g.scale.setScalar(w ? .95 : .72); H.g.rotation.y = H.ry + sx * .4; H.g.rotation.x = sy * .3 + scrollY * .0006
+      }
+      if (AE.vis) { const pulse = .5 + .3 * Math.sin(n * .004); aeRing.material.opacity = pulse; aeRing.scale.setScalar(1 + .15 * Math.sin(n * .003)); aeRing.lookAt(AE.cam.position) }
+      if (D.vis && !D.paused) { if (run && ++dfr % 2 === 0) { dStep(); dView(); if (steps >= 240) run = false } tests.forEach((t, i) => t.scale.setScalar(i === tests.length - 1 ? 1 + .25 * Math.sin(n * .008) : 1)) }
+      if (G.vis) {
+        const d = gtg - gt; if (!G.paused) { gt += Math.abs(d) < .012 ? d : Math.sign(d) * (d > 0 ? .002 : .012); born = Math.min(1, born + .025) } gz.material.size = .13 * born;
+        const e = gt * gt * (3 - 2 * gt); for (let i = 0; i < GN; i++) { let k = Math.max(0, Math.min(1, e * 1.5 - Rr[i] * .5)); k = k * k * (3 - 2 * k); for (let j = 0; j < 3; j++)GP[i * 3 + j] = Zs[i][j] + (Ss[i][j] - Zs[i][j]) * k }
+        gz.geometry.attributes.position.needsUpdate = true; const cr = Math.round(50 + 48 * (1 - e) * (1 - e)); cap(gt < .02 ? 0 : gt > .97 ? 2 : 1); $('gs').textContent = Math.round(gt * 500); $('gc').textContent = cr + '%'; $('gb').style.width = cr + '%'
+      }
+      if (P.vis) { ganStep(n); P.g.scale.setScalar(Math.min(1, P.cam.aspect / 1.9)) }
+      if (C.vis) { const sc = scrollY * .0012, t = RM ? 0 : n; cm.forEach(m => { const u = m.userData; m.rotation.x = sc * u.s * 3 + t * .0003 * u.s; m.rotation.y = t * .0004 * u.s; m.position.y = u.y + Math.sin(t * .001 * u.s + u.p) * .25 }) }
+      bgStep(n);
+      if (I2.vis) ob.forEach((m, i) => { const a = (RM ? 0 : n) * .001 + i * .4; m.position.set(Math.cos(a) * 1.7, Math.sin(a * 2) * .35, Math.sin(a) * 1.7) });
+      all.forEach(s => { if (!s.vis) return; if (!s.own) { if (s.spin && !s.drag && !RM && !s.paused) s.ry += s.spin; s.g.rotation.y = s.ry; s.g.rotation.x = Math.max(-1, Math.min(1, s.rx)) } s.r.render(s.s, s.cam) });
+      $('bar').style.transform = `scaleX(${scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight)})`
+    })(0);
+  </script>
+</body>
+
+</html>

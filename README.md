@@ -128,6 +128,7 @@ Built by:
 | 🟡 **SP** | **Shanay Puntambekar** | `33273` |
 | 🔴 **AJ** | **Atharva Jaysingpure** | `33237` |
 | 🟡 **RG** | **Rishi Gandhi** | `33226` |
+| 🔴 **AD** | **Aditya Divedi** | `33201` |
 
 ---
 
